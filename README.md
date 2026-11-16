@@ -205,6 +205,10 @@ Commands print one JSON object and exit with a meaningful code; `cuttle --help` 
   `cuttle --forward file.pdf LINE file.tex` shows a source line in the PDF.
 - Interface size: View > Appearance > Interface size, or Ctrl+Alt++ / Ctrl+Alt+- (Ctrl+Alt+0: automatic); saved as
   `ui_scale` in the settings.
+- Theme: Nord, dark by default. The menu's Dark / Light / System (System follows the desktop) is `scheme` in the
+  settings' `[theme]` table. Its colours come from the desktop theme's
+  `~/.local/state/omarchy/current/theme/colors.toml` when there is one, and each of its 13 roles (`accent`,
+  `background`, `foreground`, `blue`, ...) can be set there as `#rrggbb`, as in jackdaw and ferret.
 - Logging: `CUTTLE_LOG=error|warn|info|debug`.
 
 ### Updates
