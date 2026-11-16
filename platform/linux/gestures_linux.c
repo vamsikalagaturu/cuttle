@@ -29,7 +29,7 @@ void __real_glfwDefaultWindowHints(void);
 void __wrap_glfwDefaultWindowHints(void)
 {
     __real_glfwDefaultWindowHints();
-    glfwWindowHintString(GLFW_WAYLAND_APP_ID, "pdf-tools");
+    glfwWindowHintString(GLFW_WAYLAND_APP_ID, "cuttle");
 }
 
 /* both report the scale since the pinch began; ui_add_pinch takes the change since its last call. The events come

@@ -1,4 +1,4 @@
-/* The command-line contract: runs the pdf-tools binary (argv[1]) on PDFs made here and checks its JSON,
+/* The command-line contract: runs the cuttle binary (argv[1]) on PDFs made here and checks its JSON,
  * exit codes and output files. JSON is checked on its compact form (whitespace outside strings removed). */
 #define _XOPEN_SOURCE 700
 #define _DARWIN_C_SOURCE
@@ -41,11 +41,11 @@ static char out[1 << 16]; /* the last command's compact JSON */
         }                                                                                                             \
     } while (0)
 
-/* ---- running pdf-tools and reading its output ---- */
+/* ---- running cuttle and reading its output ---- */
 
 static char *tmp(const char *name) { return pt_format("%s/%s", tmpdir, name); }
 
-/* run `pdf-tools ARGS...` (NULL-terminated, each one quoted as a single word); returns the exit code (-1: it did not
+/* run `cuttle ARGS...` (NULL-terminated, each one quoted as a single word); returns the exit code (-1: it did not
  * exit normally), out holds the compact JSON */
 static int run(const char *first, ...)
 {
@@ -722,7 +722,7 @@ static void test_other_formats(const char *statement)
     CHECK(run("render", tiff, "-o", png, "--page", "3", NULL) == OK && exists(png));
 
     CHECK(run("redact", epub, "-o", r, "--text", "Bravo", NULL) == FAILED && one_object() &&
-          has("is not a PDF; convert it first: pdf-tools convert ") && has(" -o book.pdf") && !exists(r));
+          has("is not a PDF; convert it first: cuttle convert ") && has(" -o book.pdf") && !exists(r));
     CHECK(run("watermark", docx, "-o", r, "--text", "X", NULL) == FAILED && has("convert it first"));
     CHECK(run("merge", statement, epub, "-o", r, NULL) == FAILED && has("convert it first") && !exists(r));
     CHECK(run("convert", statement, "-o", r, NULL) == FAILED && one_object() && has("already a PDF"));
@@ -799,11 +799,11 @@ static void test_update_errors(void)
     CHECK(run("update", "--bogus", NULL) == FAILED && has("{\"error\":\"usage:"));
     CHECK(run("update", "extra", NULL) == FAILED && has("{\"error\":\"usage:"));
     setenv("XDG_DATA_HOME", tmpdir, 1);
-    setenv("PDF_TOOLS_UPDATE_URL", "ftp://localhost/latest", 1);
+    setenv("CUTTLE_UPDATE_URL", "ftp://localhost/latest", 1);
     CHECK(run("update", "--check", NULL) == FAILED && one_object() && has("Refusing"));
-    setenv("PDF_TOOLS_UPDATE_URL", "http://127.0.0.1:1/latest", 1);
+    setenv("CUTTLE_UPDATE_URL", "http://127.0.0.1:1/latest", 1);
     CHECK(run("update", "--check", NULL) == FAILED && one_object() && has("\"error\":"));
-    unsetenv("PDF_TOOLS_UPDATE_URL");
+    unsetenv("CUTTLE_UPDATE_URL");
     unsetenv("XDG_DATA_HOME");
 }
 #endif
@@ -817,7 +817,7 @@ static int remove_entry(const char *path, const struct stat *st, int flag, struc
 int main(int argc, char **argv)
 {
     if (argc != 3) {
-        fprintf(stderr, "usage: test_cli PDF_TOOLS_BINARY TEST_DATA_DIR\n");
+        fprintf(stderr, "usage: test_cli CUTTLE_BINARY TEST_DATA_DIR\n");
         return 2;
     }
     bin = argv[1], data_dir = argv[2];

@@ -39,11 +39,11 @@ char *pt_tessdata_dir(const char *language, const char *exe_dir)
     const char *env = getenv("TESSDATA_PREFIX");
     if (env && *env) pt_push(dirs, pt_strdup(env));
     char *data = pt_data_dir();
-    pt_push(dirs, pt_format("%s/pdf-tools/tessdata", data));
+    pt_push(dirs, pt_format("%s/cuttle/tessdata", data));
     free(data);
     if (exe_dir) {
         pt_push(dirs, pt_format("%s/tessdata", exe_dir));
-        pt_push(dirs, pt_format("%s/../share/pdf-tools/tessdata", exe_dir));
+        pt_push(dirs, pt_format("%s/../share/cuttle/tessdata", exe_dir));
         pt_push(dirs, pt_format("%s/../Resources/tessdata", exe_dir));
     }
     /* the shared data folders of the XDG Base Directory spec, with the layouts distributions install Tesseract's

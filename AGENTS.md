@@ -1,9 +1,9 @@
-# PDF Tools for agents
+# cuttle for agents
 
-`pdf-tools` is a PDF viewer/editor with a window, plus commands that run without one. Use the
+`cuttle` is a PDF viewer/editor with a window, plus commands that run without one. Use the
 commands: they never prompt, print one JSON object on stdout, and exit with a meaningful code.
-`pdf-tools --help` lists the commands, `pdf-tools COMMAND --help` a command's options; this
-file (`pdf-tools help`) covers what those do not.
+`cuttle --help` lists the commands, `cuttle COMMAND --help` a command's options; this
+file (`cuttle help`) covers what those do not.
 
 ## Conventions
 
@@ -51,7 +51,7 @@ the window.
   places a picture, which is not a cryptographic signature.
 - `bates` numbers count only the selected pages; the output gives `first` and `last`.
 - `ocr` needs Tesseract's `LANG.traineddata` (in `--tessdata`, `$TESSDATA_PREFIX`,
-  `$XDG_DATA_HOME/pdf-tools/tessdata` (Windows: `%LOCALAPPDATA%\pdf-tools\tessdata`), `tessdata`
+  `$XDG_DATA_HOME/cuttle/tessdata` (Windows: `%LOCALAPPDATA%\cuttle\tessdata`), `tessdata`
   next to the program or the system's data folders); `characters_added` is 0 when the pages
   already had text.
 - `comments` lists marked text (with the text under it), notes, text boxes, stamps, carets and
@@ -74,7 +74,7 @@ the window.
   JXR, PSD, PNM), SVG, EPUB, MOBI, FB2, DOCX, XLSX, PPTX. The commands that only read (`info`,
   `search`, `inspect`, `comments`, `render`, `export-images`, `compare`, `ocr`) take them as they
   are, e-books and Office documents laid out at A5, 11 pt; the commands that edit fail with
-  `"... is not a PDF; convert it first: pdf-tools convert IN -o OUT.pdf"` (`merge` still takes
+  `"... is not a PDF; convert it first: cuttle convert IN -o OUT.pdf"` (`merge` still takes
   images). `convert` keeps the text searchable, links and the outline. Office files come out as
   their text without the layout (MuPDF reads no slide or page layout), so the window does not
   open them; for the real layout use LibreOffice (`soffice --headless --convert-to pdf FILE`).
@@ -82,8 +82,8 @@ the window.
 ## The window
 
 Edits made in the window (redactions, text, signatures, forms, page changes) only reach the
-file when the user saves; do not expect them on disk. `pdf-tools file.pdf` opens a tab in the
-window used last; on Windows `--install-desktop` also adds PDF Tools to "Open with" for PDFs.
+file when the user saves; do not expect them on disk. `cuttle file.pdf` opens a tab in the
+window used last; on Windows `--install-desktop` also adds cuttle to "Open with" for PDFs.
 
 ## LaTeX syncing
 
@@ -93,11 +93,11 @@ window used last; on Windows `--install-desktop` also adds PDF Tools to "Open wi
 - SyncTeX needs `-synctex=1` (latexmk: `-synctex=1`, or `$pdflatex = 'pdflatex -synctex=1 %O %S'`),
   which writes `name.synctex.gz` next to `name.pdf`. Without it, lookups report no data.
 - PDF to source: Ctrl+click in the window runs the user's `editor_command`
-  (`~/.config/pdf-tools/settings.toml`, Windows: `%APPDATA%\pdf-tools\settings.toml`; `%f` = file,
+  (`~/.config/cuttle/settings.toml`, Windows: `%APPDATA%\cuttle\settings.toml`; `%f` = file,
   `%l` = line, e.g. `code -g %f:%l`).
-- Source to PDF: `pdf-tools --forward main.pdf LINE main.tex`; the running window jumps to that
+- Source to PDF: `cuttle --forward main.pdf LINE main.tex`; the running window jumps to that
   line and highlights it briefly (it starts one if none runs).
-- Without the window, `pdf-tools synctex` answers the same questions as JSON:
+- Without the window, `cuttle synctex` answers the same questions as JSON:
   `--source chapters/intro.tex --line 42` gives `{"page", "rects"}`, `--page 3 --at 120,400`
   gives `{"source", "line"}`. Source paths match by full path, else by file name; a line that
   typesets nothing maps to the next line that does.

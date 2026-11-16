@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.vamsikalagaturu.pdftools">
+    package="io.github.vamsikalagaturu.cuttle">
 
     <!-- documents come through the system picker or another app's "Open with": no storage permission. The network
          and installing packages are for updates only (update.c): the release check and the APK it hands to the
@@ -8,18 +8,18 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application
-        android:label="PDF Tools"
+        android:label="cuttle"
         android:icon="@mipmap/ic_launcher"
         android:hasCode="true"
         android:allowBackup="false"
         android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
         <activity
-            android:name=".PdfToolsActivity"
+            android:name=".CuttleActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:windowSoftInputMode="adjustNothing|stateHidden"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode|density|fontScale|locale|layoutDirection">
-            <meta-data android:name="android.app.lib_name" android:value="pdf-tools" />
+            <meta-data android:name="android.app.lib_name" android:value="cuttle" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -48,7 +48,7 @@
         </activity>
         <provider
             android:name=".ShareProvider"
-            android:authorities="io.github.vamsikalagaturu.pdftools.share"
+            android:authorities="io.github.vamsikalagaturu.cuttle.share"
             android:exported="false"
             android:grantUriPermissions="true" />
     </application>

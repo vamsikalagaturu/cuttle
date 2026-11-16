@@ -51,7 +51,7 @@ struct cmd {
     const char *exclusive[3]; /* one of these is required */
 };
 
-static const char *prog = "pdf-tools";
+static const char *prog = "cuttle";
 
 /* argparse's message on stderr, then the same as the JSON error on stdout; exits with FAILED. c may be NULL. */
 static _Noreturn void usage_error(const cmd *c, const char *fmt, ...)
@@ -1631,7 +1631,7 @@ static int cmd_ocr(args *a)
     char *datadir = get(a, "--tessdata") ? pt_strdup(get(a, "--tessdata")) : pt_tessdata_dir(language, exe_dir);
     free(exe_dir);
     if (!datadir)
-        fail("no Tesseract data for '%s': put %s.traineddata in ~/.local/share/pdf-tools/tessdata or pass --tessdata",
+        fail("no Tesseract data for '%s': put %s.traineddata in ~/.local/share/cuttle/tessdata or pass --tessdata",
              language, language);
 
     pdf_document *doc = NULL;
@@ -2147,7 +2147,7 @@ static void update_refused(pt_json *j, const pt_release *rel)
 
 static int cmd_update(args *a)
 {
-    pt_update_use_url(getenv("PDF_TOOLS_UPDATE_URL"));
+    pt_update_use_url(getenv("CUTTLE_UPDATE_URL"));
     /* Ctrl+C reaches curl too; this program then lives on to remove the partial download from the install */
     signal(SIGINT, keep_running);
     char *exe = pt_exe_path(), *target = NULL;
@@ -2591,18 +2591,18 @@ const char *pt_cli_guide(void) { return (const char *)pt_asset_agents_md; }
 void pt_cli_usage(FILE *out)
 {
     fputs("usage:\n"
-          "  pdf-tools [file.pdf ...]                       open in the window used last (starts one if needed)\n"
-          "  pdf-tools --new-window [file.pdf ...]          open in a new window\n"
-          "  pdf-tools --forward file.pdf LINE source.tex   SyncTeX: show where a source line is typeset\n"
-          "  pdf-tools --install-desktop | --uninstall-desktop\n"
-          "  pdf-tools --version\n"
-          "  pdf-tools COMMAND ...                          without the window, JSON output:\n"
+          "  cuttle [file.pdf ...]                       open in the window used last (starts one if needed)\n"
+          "  cuttle --new-window [file.pdf ...]          open in a new window\n"
+          "  cuttle --forward file.pdf LINE source.tex   SyncTeX: show where a source line is typeset\n"
+          "  cuttle --install-desktop | --uninstall-desktop\n"
+          "  cuttle --version\n"
+          "  cuttle COMMAND ...                          without the window, JSON output:\n"
           "      info redact fill pages merge split protect unprotect flatten convert synctex\n"
           "      search inspect comments render export-images annotate draw insert-text insert-image\n"
           "      sign prepare-signature bates watermark ocr compare scrub edit-annotation redact-text\n"
           "      new add-field update\n"
-          "  pdf-tools COMMAND --help                       options of one command\n"
-          "  pdf-tools help                                 the guide for scripts and agents (AGENTS.md)\n",
+          "  cuttle COMMAND --help                       options of one command\n"
+          "  cuttle help                                 the guide for scripts and agents (AGENTS.md)\n",
           out);
 }
 
@@ -2621,7 +2621,7 @@ int pt_cli_main(int argc, char **argv)
         return OK;
     }
     if (!strcmp(argv[1], "--version")) {
-        printf("pdf-tools %s (MuPDF %s)\n", PT_VERSION, FZ_VERSION);
+        printf("cuttle %s (MuPDF %s)\n", PT_VERSION, FZ_VERSION);
         return OK;
     }
     const cmd *c = NULL;

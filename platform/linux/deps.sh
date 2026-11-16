@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Downloads and builds the third-party libraries pdf-tools links on Linux, from the sources pinned in
+# Downloads and builds the third-party libraries cuttle links on Linux, from the sources pinned in
 # platform/versions.sh: MuPDF (with Tesseract), OpenSSL and raylib (GLFW with both Wayland and X11), plus
-# raygui and Tesseract's English data. Everything goes under $PT_LINUX_OUT (default ~/.cache/pdf-tools/linux),
+# raygui and Tesseract's English data. Everything goes under $PT_LINUX_OUT (default ~/.cache/cuttle/linux),
 # except the raylib and raygui sources (thirdparty/ in the repo); what is already there is reused.
 # build.sh sources this file first and uses the paths it sets; run it alone (platform/linux/deps.sh) to only build
 # the libraries, as CI does before caching them.
@@ -10,7 +10,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd "$HERE/../.." && pwd)
 . "$REPO/platform/versions.sh"
-ROOT=${PT_LINUX_OUT:-$HOME/.cache/pdf-tools/linux}
+ROOT=${PT_LINUX_OUT:-$HOME/.cache/cuttle/linux}
 JOBS=$(nproc)
 ARCH=$(uname -m)
 case "$ARCH" in

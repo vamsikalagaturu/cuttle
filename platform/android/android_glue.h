@@ -15,7 +15,7 @@ extern pt_glfw_key_fn pt_glfw_key;
 double pt_android_wait_limit(void); /* seconds the idle wait may sleep */
 void pt_raylib_follow_window(void); /* raylib_core.c: adopt the window's current size */
 
-/* PdfToolsActivity.<method>(String x nargs) returning String, nargs at most 4; the result is malloc'd, NULL for
+/* CuttleActivity.<method>(String x nargs) returning String, nargs at most 4; the result is malloc'd, NULL for
  * Java null or a Java exception */
 char *pt_java(const char *method, int nargs, ...);
 void pt_android_thread_end(void); /* a thread other than the window's that called pt_java(), before it ends */

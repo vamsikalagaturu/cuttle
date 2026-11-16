@@ -24,7 +24,7 @@ char *pt_java(const char *method, int nargs, ...);
 extern char *pt_android_cache_dir;
 #endif
 
-#define LATEST_URL "https://api.github.com/repos/vamsikalagaturu/pdf-tools/releases/latest"
+#define LATEST_URL "https://api.github.com/repos/vamsikalagaturu/cuttle/releases/latest"
 
 #if defined(__x86_64__) || defined(_M_X64)
 #define ARCH "x86_64"
@@ -47,7 +47,7 @@ void pt_update_use_url(const char *url) { hook = url && *url ? url : NULL; }
 #ifndef __ANDROID__
 static int can_write(const char *dir)
 {
-    char *probe = pt_format("%s/.pdf-tools-XXXXXX", dir);
+    char *probe = pt_format("%s/.cuttle-XXXXXX", dir);
     int fd = mkstemp(probe), ok = fd >= 0;
     if (ok) close(fd), unlink(probe);
     free(probe);
@@ -115,11 +115,11 @@ pt_install_kind pt_update_detect(const char *running_exe, char **where)
     pt_install_kind k = PT_INSTALL_NONE;
     char *exe = pt_realpath(running_exe), *dir = pt_dirname(exe), *top = pt_dirname(dir), *parent = pt_dirname(top);
 #if defined(_WIN32)
-    static const char *const FILES[] = {"pdf-tools.exe", "tessdata", "LICENSE.txt", "*.dll", NULL};
-    if (!strcasecmp(pt_basename(exe), "pdf-tools.exe") && only_entries(dir, FILES) && can_write(dir) && can_write(top))
+    static const char *const FILES[] = {"cuttle.exe", "tessdata", "LICENSE.txt", "*.dll", NULL};
+    if (!strcasecmp(pt_basename(exe), "cuttle.exe") && only_entries(dir, FILES) && can_write(dir) && can_write(top))
         k = PT_INSTALL_WINDOWS, *where = pt_strdup(dir);
 #elif defined(__APPLE__)
-    /* exe is <bundle>.app/Contents/MacOS/pdf-tools */
+    /* exe is <bundle>.app/Contents/MacOS/cuttle */
     char *bundle = pt_dirname(top), *apps = pt_dirname(bundle);
     size_t n = strlen(bundle);
     if (n > 4 && !strcmp(bundle + n - 4, ".app") && !strcmp(pt_basename(dir), "MacOS") &&
@@ -136,10 +136,10 @@ pt_install_kind pt_update_detect(const char *running_exe, char **where)
             k = PT_INSTALL_APPIMAGE, *where = pt_strdup(appimage);
         free(folder);
     } else {
-        static const char *const TOP[] = {"bin", "share", NULL}, *const BIN[] = {"pdf-tools", NULL},
-                                 *const SHARE[] = {"pdf-tools", "applications", "icons", "man", NULL};
-        char *share = pt_join(top, "share"), *own = pt_join(share, "pdf-tools");
-        if (!strcmp(pt_basename(exe), "pdf-tools") && !strcmp(pt_basename(dir), "bin") && is_dir(own) &&
+        static const char *const TOP[] = {"bin", "share", NULL}, *const BIN[] = {"cuttle", NULL},
+                                 *const SHARE[] = {"cuttle", "applications", "icons", "man", NULL};
+        char *share = pt_join(top, "share"), *own = pt_join(share, "cuttle");
+        if (!strcmp(pt_basename(exe), "cuttle") && !strcmp(pt_basename(dir), "bin") && is_dir(own) &&
             only_entries(top, TOP) && only_entries(dir, BIN) && only_entries(share, SHARE) && can_write(top) &&
             can_write(parent))
             k = PT_INSTALL_TARBALL, *where = pt_strdup(top);
@@ -248,7 +248,7 @@ static int fetch(pt_update *j, const char *url, const char *path, int api)
         return -1;
     }
     char agent[64];
-    snprintf(agent, sizeof agent, "pdf-tools/%s", PT_VERSION);
+    snprintf(agent, sizeof agent, "cuttle/%s", PT_VERSION);
 #ifdef __ANDROID__
     (void)api;
     char *err = pt_java("download", 3, url, path, agent);
@@ -387,8 +387,8 @@ static void install_prefix(pt_update *j, const char *fresh)
 {
     pt_strs files = {0};
     const char *blocked = NULL;
-    char *exe = pt_join(fresh, "bin/pdf-tools");
-    if (access(exe, X_OK)) fail(j, "The archive has no pdf-tools/bin/pdf-tools.", NULL);
+    char *exe = pt_join(fresh, "bin/cuttle");
+    if (access(exe, X_OK)) fail(j, "The archive has no cuttle/bin/cuttle.", NULL);
     else if (pt_tree_files(fresh, &files)) fail(j, "The archive holds something other than files and folders.", NULL);
     else if ((blocked = pt_prefix_blocked(j->target, &files))) {
         char *path = pt_join(j->target, blocked);
@@ -398,9 +398,9 @@ static void install_prefix(pt_update *j, const char *fresh)
     int replaced = 0;
     for (int last = 0; last < 2 && !j->failed; last++)
         for (int i = 0; i < files.n && !j->failed; i++) {
-            if ((strcmp(files.v[i], "bin/pdf-tools") == 0) != last) continue;
+            if ((strcmp(files.v[i], "bin/cuttle") == 0) != last) continue;
             char *from = pt_join(fresh, files.v[i]), *to = pt_join(j->target, files.v[i]);
-            if (!strcmp(files.v[i], "share/applications/pdf-tools.desktop") && pt_exists(to)) keep_exec(from, to);
+            if (!strcmp(files.v[i], "share/applications/cuttle.desktop") && pt_exists(to)) keep_exec(from, to);
             if (!pt_replace_file(from, to)) replaced++;
             else {
                 char *msg = pt_format("Could not replace %s: %s\n%d of the update's %d files were installed before "
@@ -412,7 +412,7 @@ static void install_prefix(pt_update *j, const char *fresh)
             free(from);
             free(to);
         }
-    if (!j->failed) j->exe = pt_join(j->target, "bin/pdf-tools");
+    if (!j->failed) j->exe = pt_join(j->target, "bin/cuttle");
     pt_strs_free(&files);
     free(exe);
 }
@@ -429,9 +429,9 @@ void pt_update_prepare(pt_update *j, pt_install_kind kind, const char *asset, co
     j->rel.size = rel->size;
     if (kind == PT_INSTALL_ANDROID) {
         pt_mkdirs(target);
-        j->part = pt_join(target, "pdf-tools.apk.part");
+        j->part = pt_join(target, "cuttle.apk.part");
     } else if (kind == PT_INSTALL_PREFIX) {
-        j->part = pt_format("%s/.pdf-tools-update-%d.tar.gz", target, (int)getpid());
+        j->part = pt_format("%s/.cuttle-update-%d.tar.gz", target, (int)getpid());
     } else {
         const char *ext = kind == PT_INSTALL_TARBALL   ? ".tar.gz"
                           : kind == PT_INSTALL_WINDOWS ? ".zip"
@@ -449,7 +449,7 @@ void pt_update_install(pt_update *j)
         return;
     }
     set_phase(j, PT_UPDATE_INSTALLING);
-    char *stage = j->install == PT_INSTALL_PREFIX ? pt_format("%s/.pdf-tools-update-%d", j->target, (int)getpid())
+    char *stage = j->install == PT_INSTALL_PREFIX ? pt_format("%s/.cuttle-update-%d", j->target, (int)getpid())
                                                   : pt_format("%s.update-%d", j->target, (int)getpid());
     switch (j->install) {
     case PT_INSTALL_APPIMAGE:
@@ -461,11 +461,11 @@ void pt_update_install(pt_update *j)
     case PT_INSTALL_TARBALL: {
 #if !defined(_WIN32) && !defined(__ANDROID__)
         char *argv[] = {"tar", "-xzf", j->part, "-C", stage, NULL};
-        char *fresh = pt_join(stage, "pdf-tools"), *exe = pt_join(fresh, "bin/pdf-tools");
+        char *fresh = pt_join(stage, "cuttle"), *exe = pt_join(fresh, "bin/cuttle");
         if (mkdir(stage, 0755)) replace_failed(j, stage);
         else if (!unpack(j, argv)) {
-            if (access(exe, X_OK)) fail(j, "The archive has no pdf-tools/bin/pdf-tools.", NULL);
-            else if (!swap_in(j, fresh)) j->exe = pt_join(j->target, "bin/pdf-tools");
+            if (access(exe, X_OK)) fail(j, "The archive has no cuttle/bin/cuttle.", NULL);
+            else if (!swap_in(j, fresh)) j->exe = pt_join(j->target, "bin/cuttle");
         }
         pt_remove_tree(stage);
         free(fresh);
@@ -476,7 +476,7 @@ void pt_update_install(pt_update *j)
     case PT_INSTALL_PREFIX: {
 #if !defined(_WIN32) && !defined(__ANDROID__)
         char *argv[] = {"tar", "-xzf", j->part, "-C", stage, NULL};
-        char *fresh = pt_join(stage, "pdf-tools");
+        char *fresh = pt_join(stage, "cuttle");
         if (mkdir(stage, 0755)) replace_failed(j, stage);
         else if (!unpack(j, argv)) install_prefix(j, fresh);
         pt_remove_tree(stage);
@@ -487,20 +487,20 @@ void pt_update_install(pt_update *j)
     case PT_INSTALL_MACOS: {
 #if defined(__APPLE__)
         const char *tmp = getenv("TMPDIR");
-        char *mount = pt_format("%s/pdf-tools-mount-XXXXXX", tmp && *tmp ? tmp : "/tmp");
+        char *mount = pt_format("%s/cuttle-mount-XXXXXX", tmp && *tmp ? tmp : "/tmp");
         if (!mkdtemp(mount)) replace_failed(j, mount);
         else {
             char *attach[] = {"hdiutil",     "attach", "-nobrowse", "-readonly", "-noautoopen",
                               "-mountpoint", mount,    j->part,     NULL};
             if (!unpack(j, attach)) {
-                char *app_in = pt_join(mount, "PDF Tools.app");
+                char *app_in = pt_join(mount, "cuttle.app");
                 char *copy[] = {"ditto", app_in, stage, NULL};
                 int copied = !unpack(j, copy);
                 char *detach[] = {"hdiutil", "detach", mount, NULL},
                      *force[] = {"hdiutil", "detach", "-force", mount, NULL};
                 char err[512];
                 if (run_wait(j, detach, err, sizeof err)) run_wait(j, force, err, sizeof err);
-                if (copied && !swap_in(j, stage)) j->exe = pt_join(j->target, "Contents/MacOS/pdf-tools");
+                if (copied && !swap_in(j, stage)) j->exe = pt_join(j->target, "Contents/MacOS/cuttle");
                 free(app_in);
             }
             rmdir(mount);
@@ -515,10 +515,10 @@ void pt_update_install(pt_update *j)
         const char *root = getenv("SystemRoot");
         char *tar = pt_format("%s\\System32\\tar.exe", root && *root ? root : "C:\\Windows");
         char *argv[] = {tar, "-xf", j->part, "-C", stage, NULL};
-        char *exe = pt_join(stage, "PDF-Tools/pdf-tools.exe");
+        char *exe = pt_join(stage, "cuttle/cuttle.exe");
         if (mkdir(stage, 0755)) replace_failed(j, stage);
         else if (!unpack(j, argv)) {
-            if (!pt_exists(exe)) fail(j, "The archive has no PDF-Tools\\pdf-tools.exe.", NULL);
+            if (!pt_exists(exe)) fail(j, "The archive has no cuttle\\cuttle.exe.", NULL);
             else j->stage = pt_strdup(stage);
         }
         if (!j->stage) pt_remove_tree(stage);
@@ -528,7 +528,7 @@ void pt_update_install(pt_update *j)
         break;
     }
     case PT_INSTALL_ANDROID: {
-        char *apk = pt_join(j->target, "pdf-tools.apk");
+        char *apk = pt_join(j->target, "cuttle.apk");
         if (rename(j->part, apk)) replace_failed(j, apk);
         free(apk);
         break;
@@ -541,7 +541,7 @@ void pt_update_install(pt_update *j)
 
 void pt_update_check(pt_update *j)
 {
-    char *base = pt_data_dir(), *dir = pt_format("%s/pdf-tools", base);
+    char *base = pt_data_dir(), *dir = pt_format("%s/cuttle", base);
     pt_mkdirs(dir);
     char *path = pt_format("%s/update-%d.json", dir, (int)getpid());
     pt_bytes b = {0};
@@ -612,7 +612,7 @@ static const char WIN_HELPER[] =
     "rmdir /s /q \"%~2.old-%1\"\r\n"
     ":done\r\n"
     "rmdir /s /q \"%~4\"\r\n"
-    "if \"%~5\"==\"restart\" start \"\" \"%~2\\pdf-tools.exe\"\r\n"
+    "if \"%~5\"==\"restart\" start \"\" \"%~2\\cuttle.exe\"\r\n"
     "del \"%~f0\"\r\n";
 
 /* cmd's move and rmdir take '/' for a switch */
@@ -629,8 +629,8 @@ int pt_update_windows_swap(pt_update *j, int restart)
     const char *tmp = getenv("TEMP");
     char pid[16];
     snprintf(pid, sizeof pid, "%d", (int)getpid());
-    char *script = pt_format("%s\\pdf-tools-update-%s.cmd", tmp && *tmp ? tmp : ".", pid);
-    char *folder = backslashes(j->target), *stage = backslashes(j->stage), *fresh = pt_format("%s\\PDF-Tools", stage);
+    char *script = pt_format("%s\\cuttle-update-%s.cmd", tmp && *tmp ? tmp : ".", pid);
+    char *folder = backslashes(j->target), *stage = backslashes(j->stage), *fresh = pt_format("%s\\cuttle", stage);
     char *argv[] = {script, pid, folder, fresh, stage, restart ? "restart" : "stay", NULL};
     int failed = pt_write_file(script, WIN_HELPER, sizeof WIN_HELPER - 1) || pt_win_run(argv, 0);
     if (failed) pt_log(PT_LOG_ERROR, "could not start the update helper %s", script);

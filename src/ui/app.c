@@ -280,31 +280,6 @@ void app_set_theme(const char *mode)
     theme_apply(mode);
 }
 
-static const char *accent_key(void) { return pal.dark_mode ? "accent_colour_dark" : "accent_colour_light"; }
-
-static void accent_picked(void *ctx, const unsigned char rgb[3])
-{
-    (void)ctx;
-    if (!rgb) return;
-    char hex[8];
-    snprintf(hex, sizeof hex, "#%02x%02x%02x", rgb[0], rgb[1], rgb[2]);
-    pt_settings_set_str(&app.settings, accent_key(), hex);
-    theme_apply(pt_settings_str(&app.settings, "theme"));
-}
-
-static void pick_accent(void)
-{
-    unsigned char rgb[3] = {pal.highlight.r, pal.highlight.g, pal.highlight.b};
-    colour_dialog(pal.dark_mode ? "Accent colour (dark theme)" : "Accent colour (light theme)", rgb, accent_picked,
-                  NULL);
-}
-
-static void reset_accent(void)
-{
-    pt_settings_set_str(&app.settings, accent_key(), "");
-    theme_apply(pt_settings_str(&app.settings, "theme"));
-}
-
 #ifndef __ANDROID__
 static float interface_size_setting(void)
 {
@@ -423,14 +398,7 @@ void app_handle_message(const char *text)
 
 /* ---- the menu ---- */
 
-void app_about(void)
-{
-    message_box(MSG_INFO, "About " APP_NAME,
-                APP_NAME " " PT_VERSION "\n\nView, redact, fill, annotate, sign and merge PDFs.\n\n" REPO_URL
-                         "\n\nLicense: AGPL-3.0-or-later. Icons: Lucide (ISC). UI font: Noto Sans (OFL-1.1).\n"
-                         "Native build: MuPDF, raylib, raygui.",
-                NULL, NULL);
-}
+void app_about(void) { about_dialog(); }
 
 static int document_dark, document_dark_pending;
 
@@ -513,9 +481,8 @@ static void m_action(void *ctx, intptr_t a)
         break;
     case 9: app_set_theme("dark"); break;
     case 10: app_set_theme("light"); break;
+    case 12: app_set_theme("system"); break;
     case 11: app_about(); break;
-    case 12: pick_accent(); break;
-    case 13: reset_accent(); break;
     case 14: ebook_layout_dialog(); break;
     case 15: palette_open(); break;
     case 16: keymap_dialog(); break;
@@ -589,11 +556,13 @@ ui_menu *app_build_menu(tab *t)
               pt_settings_int(&app.settings, "vim_key_hints"));
     menu_item(v, "E-book layout...", "two-pages", NULL, m_action, NULL, 14, 1, 0);
     ui_menu *a = menu_sub(v, "Appearance", "appearance");
-    int dark = strcmp(pt_settings_str(&app.settings, "theme"), "light");
-    menu_item(a, "Dark", "dark", NULL, m_action, NULL, 9, 1, dark);
-    menu_item(a, "Light", "light", NULL, m_action, NULL, 10, 1, !dark);
-    menu_sep(a);
+    const char *scheme = pt_settings_str(&app.settings, "theme");
+    int light = !strcmp(scheme, "light"), system = !strcmp(scheme, "system");
+    menu_item(a, "Dark", "dark", NULL, m_action, NULL, 9, 1, !light && !system);
+    menu_item(a, "Light", "light", NULL, m_action, NULL, 10, 1, light);
 #ifndef __ANDROID__
+    menu_item(a, "System", "appearance", NULL, m_action, NULL, 12, 1, system);
+    menu_sep(a);
     ui_menu *size = menu_sub(a, "Interface size", "interface-size");
     menu_item(size, "Auto", "interface-size", keymap_label("ui.auto"), m_size, NULL, 0, 1, ui.scale_choice == 0);
     static const int PERCENT[] = {75, 100, 125, 150, 175, 200};
@@ -603,16 +572,11 @@ ui_menu *app_build_menu(tab *t)
         menu_item(size, label, "interface-size", NULL, m_size, NULL, PERCENT[i], 1,
                   fabsf(ui.scale_choice * 100 - PERCENT[i]) < 0.5f);
     }
-    menu_sep(a);
 #endif
-    menu_item(a, "Accent colour...", "custom-colour", NULL, m_action, NULL, 12, 1, 0);
-    menu_item(a, "Reset accent colour", "undo", NULL, m_action, NULL, 13, *pt_settings_str(&app.settings, accent_key()),
-              0);
     menu_sep(m);
     menu_item(m, "Command palette...", "search", keymap_label("palette"), m_action, NULL, 15, 1, 0);
     menu_item(m, "Keyboard shortcuts...", "keyboard", keymap_label("shortcuts"), m_action, NULL, 16, 1, 0);
-    update_menu_items(m);
-    menu_item(m, "About " APP_NAME, "about", NULL, m_action, NULL, 11, 1, 0);
+    menu_item(m, "About " APP_NAME "...", "about", NULL, m_action, NULL, 11, 1, 0);
     return m;
 }
 
@@ -802,7 +766,7 @@ static void tab_strip(Rectangle r)
         Color fg = current ? pal.highlighted_text : hover ? pal.window_text : with_alpha(pal.window_text, 170);
         font_kind fk = current ? F_BOLD : F_REGULAR;
         float tx = tr.x + 12, cy = tr.y;
-        if (w->kind == TAB_HOME) draw_logo((Rectangle){tx, cy + (tr.height - 16) / 2, 16, 16}), tx += 20;
+        if (w->kind == TAB_HOME) draw_icon("file-pen-line", (Rectangle){tx, cy + (tr.height - 16) / 2, 16, 16}, fg), tx += 20;
         else if (w->kind == TAB_WORKSPACE)
             draw_icon("merge", (Rectangle){tx, cy + (tr.height - 16) / 2, 16, 16}, fg), tx += 20;
         else if (w->kind == TAB_COMPARE)
@@ -1031,7 +995,8 @@ static float frame_chrome(tab *t, win_tab *cur, float y)
     Rectangle logo = {40, y + 6, 32, 32};
     if (ui_hover(logo)) set_cursor(CUR_HAND);
     if (ui_button(ui_id_str("logo", 0), logo, NULL, NULL, B_FLAT, "Home")) app_go_home();
-    draw_logo((Rectangle){logo.x + 7, logo.y + 7, 18, 18});
+    /* the logo's glyph alone, as large as the button's icons allow: its dark tile would vanish into the header */
+    draw_icon("file-pen-line", (Rectangle){logo.x + 5, logo.y + 5, 22, 22}, pal.link);
     Rectangle tools = {74, y, ui.w - 80, HEADER_H};
     if (t) tab_toolbar(t, tools);
     else if (cur && cur->kind == TAB_WORKSPACE) workspace_toolbar(app.ws, tools);
@@ -1186,7 +1151,7 @@ static const char *exe_path(const char *argv0)
 
 static char *session_file(void)
 {
-    char *base = pt_data_dir(), *path = pt_format("%s/pdf-tools/session.txt", base);
+    char *base = pt_data_dir(), *path = pt_format("%s/cuttle/session.txt", base);
     free(base);
     return path;
 }
@@ -1323,7 +1288,7 @@ int pt_app_main(int argc, char **argv)
         /* the manual in a terminal; piped (scripts, agents) or without man, the short usage */
 #ifndef _WIN32
         if (isatty(1) && !access("/usr/bin/man", X_OK)) {
-            char tmp[] = "/tmp/pdf-tools-man-XXXXXX";
+            char tmp[] = "/tmp/cuttle-man-XXXXXX";
             int fd = mkstemp(tmp);
             if (fd >= 0 && write(fd, pt_asset_man, (size_t)pt_asset_man_size) == pt_asset_man_size) {
                 close(fd);
@@ -1610,17 +1575,17 @@ void home_frame(Rectangle area)
                      F_REGULAR, pal.disabled_text, 0);
         y += 48;
     }
-    float bw = fminf(fmaxf(170, button_width("Combine & split PDFs...", "merge", 0) + 20),
+    float bw = fminf(fmaxf(170, button_width("Combine & split PDFs", "merge", 0) + 20),
                      (w - (HOME_BUTTONS - 1) * HOME_BUTTON_GAP) / HOME_BUTTONS);
     float bx = x + (w - (bw * HOME_BUTTONS + (HOME_BUTTONS - 1) * HOME_BUTTON_GAP)) / 2;
-    if (ui_button(ui_id_str("home-open", 0), (Rectangle){bx, y, bw, 44}, "Open PDF...", "open", 0, NULL))
+    if (ui_button(ui_id_str("home-open", 0), (Rectangle){bx, y, bw, 44}, "Open PDF", "open", 0, NULL))
         app_open_dialog();
     bx += bw + HOME_BUTTON_GAP;
-    if (ui_button(ui_id_str("home-new", 0), (Rectangle){bx, y, bw, 44}, "New blank PDF...", "new-pdf", 0,
+    if (ui_button(ui_id_str("home-new", 0), (Rectangle){bx, y, bw, 44}, "New blank PDF", "new-pdf", 0,
                   "An empty PDF to add form fields, text and images to"))
         new_pdf_dialog();
     bx += bw + HOME_BUTTON_GAP;
-    if (ui_button(ui_id_str("home-merge", 0), (Rectangle){bx, y, bw, 44}, "Combine & split PDFs...", "merge", 0, NULL))
+    if (ui_button(ui_id_str("home-merge", 0), (Rectangle){bx, y, bw, 44}, "Combine & split PDFs", "merge", 0, NULL))
         app_open_workspace(NULL);
     y += 44 + 26;
     if (total) {

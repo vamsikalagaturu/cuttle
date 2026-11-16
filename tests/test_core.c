@@ -747,6 +747,34 @@ static void test_settings_replaced(void)
 #endif
 }
 
+/* the [theme] table, as in jackdaw and ferret: scheme is the "theme" setting, the roles are theme.<role>; a file
+ * of before the table (top-level theme) still reads; saving writes the table after the top-level keys */
+static void test_settings_theme_table(void)
+{
+    char *path = tmp_path("theme.toml");
+    const char *text = "ui_scale = \"auto\"\n[theme]\nscheme = \"light\"\naccent = \"#112233\"\n[other]\naccent = \"#ffffff\"\n";
+    pt_write_file(path, text, strlen(text));
+    pt_settings s;
+    pt_settings_load(&s, path);
+    CHECK(!strcmp(pt_settings_str(&s, "theme"), "light") && !strcmp(pt_settings_str(&s, "theme.accent"), "#112233"));
+    pt_settings_set_str(&s, "theme", "system");
+    pt_settings_free(&s);
+    pt_bytes b = {0};
+    CHECK(!pt_read_file(path, &b));
+    char *saved = calloc(b.len + 1, 1);
+    memcpy(saved, b.data, b.len);
+    char *table = strstr(saved, "\n[theme]\n");
+    CHECK(table && strstr(table, "\nscheme = \"system\"\n") && strstr(table, "\naccent = \"#112233\"\n") &&
+          !strstr(saved, "\ntheme = ") && strstr(saved, "\nui_scale = ") < table);
+    free(saved), free(b.data);
+
+    pt_write_file(path, "theme = \"light\"\n", 16);
+    pt_settings_load(&s, path);
+    CHECK(!strcmp(pt_settings_str(&s, "theme"), "light"));
+    pt_settings_free(&s);
+    free(path);
+}
+
 /* the words of a two-column page, in reading order */
 static char *reading_order_text(fz_context *c, const char *path)
 {
@@ -1743,35 +1771,35 @@ static void test_release(void)
     CHECK(pt_version_compare("2", "10") < 0);
 
     char *a = pt_update_asset(PT_INSTALL_APPIMAGE, "x86_64"), *t = pt_update_asset(PT_INSTALL_TARBALL, "aarch64");
-    CHECK(!strcmp(a, "PDF_Tools-x86_64.AppImage") && !strcmp(t, "PDF-Tools-Linux-aarch64.tar.gz"));
+    CHECK(!strcmp(a, "cuttle-x86_64.AppImage") && !strcmp(t, "cuttle-linux-aarch64.tar.gz"));
     CHECK(!pt_update_asset(PT_INSTALL_MACOS, "x86_64") && !pt_update_asset(PT_INSTALL_NONE, "x86_64"));
     free(a), free(t);
     t = pt_update_asset(PT_INSTALL_PREFIX, "x86_64");
-    CHECK(!strcmp(t, "PDF-Tools-Linux-x86_64.tar.gz"));
+    CHECK(!strcmp(t, "cuttle-linux-x86_64.tar.gz"));
     free(t);
 
     static const char json[] =
         "{\"tag_name\": \"v0.5.0\", \"html_url\": \"https://example.org/r\", \"assets\": ["
-        "{\"name\": \"PDF-Tools.dmg\", \"digest\": \"sha256:"
+        "{\"name\": \"cuttle.dmg\", \"digest\": \"sha256:"
         "E072982E068888EAFC9F3366EEFCA7737D084A4A97AAE2FB108218C9274760E7\", \"size\": 11282486, "
-        "\"browser_download_url\": \"https://example.org/PDF-Tools.dmg\"},"
-        "{\"name\": \"pdf-tools.apk\", \"browser_download_url\": \"https://example.org/pdf-tools.apk\"},"
-        "{\"name\": \"PDF-Tools-Windows.zip\", \"digest\": \"sha256:1234\", "
+        "\"browser_download_url\": \"https://example.org/cuttle.dmg\"},"
+        "{\"name\": \"cuttle.apk\", \"browser_download_url\": \"https://example.org/cuttle.apk\"},"
+        "{\"name\": \"cuttle-windows.zip\", \"digest\": \"sha256:1234\", "
         "\"browser_download_url\": \"https://example.org/w.zip\"}]}";
     pt_release r;
-    CHECK(!pt_release_read(ctx, json, "PDF-Tools.dmg", &r));
+    CHECK(!pt_release_read(ctx, json, "cuttle.dmg", &r));
     CHECK(r.version && !strcmp(r.version, "0.5.0") && r.page && !strcmp(r.page, "https://example.org/r"));
-    CHECK(r.url && !strcmp(r.url, "https://example.org/PDF-Tools.dmg") && r.size == 11282486);
+    CHECK(r.url && !strcmp(r.url, "https://example.org/cuttle.dmg") && r.size == 11282486);
     CHECK(r.sha256 && !strcmp(r.sha256, "e072982e068888eafc9f3366eefca7737d084a4a97aae2fb108218c9274760e7"));
     pt_release_free(&r);
     /* no digest, or one that is not a SHA-256: nothing to check the download against */
-    CHECK(!pt_release_read(ctx, json, "pdf-tools.apk", &r) && r.url && !r.sha256);
+    CHECK(!pt_release_read(ctx, json, "cuttle.apk", &r) && r.url && !r.sha256);
     pt_release_free(&r);
-    CHECK(!pt_release_read(ctx, json, "PDF-Tools-Windows.zip", &r) && r.url && !r.sha256);
+    CHECK(!pt_release_read(ctx, json, "cuttle-windows.zip", &r) && r.url && !r.sha256);
     pt_release_free(&r);
-    CHECK(!pt_release_read(ctx, json, "PDF_Tools-x86_64.AppImage", &r) && r.version && !r.url);
+    CHECK(!pt_release_read(ctx, json, "cuttle-x86_64.AppImage", &r) && r.version && !r.url);
     pt_release_free(&r);
-    CHECK(pt_release_read(ctx, "{\"message\": \"Not Found\"}", "pdf-tools.apk", &r) && !r.version);
+    CHECK(pt_release_read(ctx, "{\"message\": \"Not Found\"}", "cuttle.apk", &r) && !r.version);
     CHECK(pt_release_read(ctx, "not json", NULL, &r));
 
     char *path = tmp_path("abc.txt"), hex[65];
@@ -1802,25 +1830,25 @@ static int file_is(const char *path, const char *text)
 static void test_prefix_update(void)
 {
     char *dir = tmp_path("prefix"), *prefix = (pt_mkdirs(dir), pt_realpath(dir));
-    char *exe = prefix_file(prefix, "bin/pdf-tools", "old program", 0755);
-    char *data = prefix_file(prefix, "share/pdf-tools/tessdata/eng.traineddata", "old data", 0644);
+    char *exe = prefix_file(prefix, "bin/cuttle", "old program", 0755);
+    char *data = prefix_file(prefix, "share/cuttle/tessdata/eng.traineddata", "old data", 0644);
     char *entry =
-        prefix_file(prefix, "share/applications/pdf-tools.desktop", "[Desktop Entry]\nExec=pdf-tools %F\n", 0644);
+        prefix_file(prefix, "share/applications/cuttle.desktop", "[Desktop Entry]\nExec=cuttle %F\n", 0644);
     char *other = prefix_file(prefix, "bin/other", "someone else's", 0755);
     char *found = pt_updatable_prefix(exe);
     CHECK(found && !strcmp(found, prefix));
     free(found);
-    char *renamed = prefix_file(prefix, "bin/pdf-tools-2", "", 0755),
-         *wrong = prefix_file(prefix, "sbin/pdf-tools", "", 0755);
+    char *renamed = prefix_file(prefix, "bin/cuttle-2", "", 0755),
+         *wrong = prefix_file(prefix, "sbin/cuttle", "", 0755);
     CHECK(!pt_updatable_prefix(renamed) && !pt_updatable_prefix(wrong));
 
     pt_strs files = {0};
-    CHECK(!pt_tree_files(prefix, &files) && files.n == 6 && !strcmp(files.v[0], "bin/other") &&
-          !strcmp(files.v[1], "bin/pdf-tools") && !strcmp(files.v[5], "share/pdf-tools/tessdata/eng.traineddata"));
+    CHECK(!pt_tree_files(prefix, &files) && files.n == 6 && !strcmp(files.v[0], "bin/cuttle") &&
+          !strcmp(files.v[2], "bin/other") && !strcmp(files.v[5], "share/cuttle/tessdata/eng.traineddata"));
     pt_strs_free(&files);
-    pt_push(files, pt_strdup("share/man/man1/pdf-tools.1"));
+    pt_push(files, pt_strdup("share/man/man1/cuttle.1"));
     CHECK(!pt_prefix_blocked(prefix, &files));
-    char *link = pt_join(prefix, "share/pdf-tools/link");
+    char *link = pt_join(prefix, "share/cuttle/link");
     CHECK(!symlink(data, link));
     CHECK(pt_tree_files(prefix, &files) && !pt_updatable_prefix(exe));
     unlink(link);
@@ -1840,7 +1868,7 @@ static void test_prefix_update(void)
         free(apps);
     }
 
-    char *fresh = tmp_path("fresh-program"), *man = pt_join(prefix, "share/man/man1/pdf-tools.1");
+    char *fresh = tmp_path("fresh-program"), *man = pt_join(prefix, "share/man/man1/cuttle.1");
     pt_write_file(fresh, "new program", 11);
     chmod(fresh, 0750);
     struct stat st;
@@ -1853,12 +1881,12 @@ static void test_prefix_update(void)
     CHECK(pt_replace_file(link, data) && errno == ENOENT && file_is(data, "old data"));
     CHECK(file_is(other, "someone else's"));
 
-    char *kept = pt_desktop_keep_exec("[Desktop Entry]\nName=PDF Tools\nExec=pdf-tools %F\nIcon=pdf-tools\n",
-                                      "[Desktop Entry]\nExec=\"/home/u/.local/bin/pdf-tools\" %F\nName=Old\n");
-    CHECK(!strcmp(kept, "[Desktop Entry]\nName=PDF Tools\nExec=\"/home/u/.local/bin/pdf-tools\" %F\nIcon=pdf-tools\n"));
+    char *kept = pt_desktop_keep_exec("[Desktop Entry]\nName=cuttle\nExec=cuttle %F\nIcon=cuttle\n",
+                                      "[Desktop Entry]\nExec=\"/home/u/.local/bin/cuttle\" %F\nName=Old\n");
+    CHECK(!strcmp(kept, "[Desktop Entry]\nName=cuttle\nExec=\"/home/u/.local/bin/cuttle\" %F\nIcon=cuttle\n"));
     free(kept);
-    kept = pt_desktop_keep_exec("Exec=pdf-tools %F\n", "[Desktop Entry]\nName=x\n");
-    CHECK(!strcmp(kept, "Exec=pdf-tools %F\n"));
+    kept = pt_desktop_keep_exec("Exec=cuttle %F\n", "[Desktop Entry]\nName=x\n");
+    CHECK(!strcmp(kept, "Exec=cuttle %F\n"));
     free(kept);
 
     free(tmp);
@@ -1902,6 +1930,7 @@ int main(void)
     test_ex();
     test_words_range();
     test_settings_replaced();
+    test_settings_theme_table();
     test_reading_order_threads();
     test_merge_encrypted();
     test_personal_data();

@@ -33,7 +33,7 @@ static int nconns;
 
 char *ipc_dir(void)
 {
-    char *data = pt_data_dir(), *dir = pt_format("%s/pdf-tools/run", data);
+    char *data = pt_data_dir(), *dir = pt_format("%s/cuttle/run", data);
     free(data);
     pt_mkdirs(dir);
     return dir;

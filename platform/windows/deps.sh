@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Sets up the MSVC environment and downloads and builds the third-party libraries pdf-tools.exe links, for 64-bit
+# Sets up the MSVC environment and downloads and builds the third-party libraries cuttle.exe links, for 64-bit
 # Windows, from the sources pinned in platform/versions.sh: MuPDF (with Tesseract, through its Visual Studio
 # solution, inside its source tree), OpenSSL and raylib, plus raygui and Tesseract's English data. Runs in
 # Git Bash; needs Visual Studio 2022 or 2026 with the C++ tools, Strawberry Perl, curl and git (see build.sh).
-# Everything goes under $PT_WINDOWS_OUT (default ~/.cache/pdf-tools/windows), except the raylib and raygui sources
+# Everything goes under $PT_WINDOWS_OUT (default ~/.cache/cuttle/windows), except the raylib and raygui sources
 # (thirdparty/ in the repo); what is already there is reused.
 # build.sh sources this file first and uses the paths and the environment it sets; run it alone
 # (platform/windows/deps.sh) to only build the libraries, as CI does before caching them.
@@ -12,7 +12,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd "$HERE/../.." && pwd)
 . "$REPO/platform/versions.sh"
-ROOT=${PT_WINDOWS_OUT:-$HOME/.cache/pdf-tools/windows}
+ROOT=${PT_WINDOWS_OUT:-$HOME/.cache/cuttle/windows}
 JOBS=$(nproc)
 
 for tool in curl git tar sha256sum cygpath cmd powershell; do

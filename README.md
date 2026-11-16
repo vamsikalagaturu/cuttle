@@ -1,4 +1,4 @@
-# PDF Tools
+# cuttle
 
 A PDF viewer and editor for Linux, macOS, Windows and Android, with a command line for scripts and agents.
 
@@ -36,7 +36,7 @@ BSD-style and fontconfig's MIT-style licenses are permissive and impose nothing 
   (`reopen_tabs`). Shift+drag selects whole lines (a table's rows across their cells). Margin notes, list and
   reference labels and slanted table headers are handled when numbering and selecting.
 - **Keys**: every shortcut can be changed in Menu > Keyboard shortcuts... (searchable, warns about clashes),
-  kept in `~/.config/pdf-tools/keys.toml`.
+  kept in `~/.config/cuttle/keys.toml`.
 - **Vim keys** (View > Vim keys): a caret on the text, always there, moved by h/j/k/l, w/b/e, 0/$, gg/G, 12G and
   Ctrl+d/u (the view follows; Ctrl+e/y scroll it alone; on pages without text the keys scroll); / and n/N; `v`/`V`
   select by character or line to copy (`y`) or mark; the tools move behind the leader (Space h = Highlight).
@@ -70,77 +70,77 @@ fontconfig and OpenGL from the system (installed on any desktop). Pick one:
 
   ```sh
   mkdir -p ~/.local/bin
-  curl -fL https://github.com/vamsikalagaturu/pdf-tools/releases/latest/download/PDF_Tools-x86_64.AppImage -o ~/.local/bin/pdf-tools
-  chmod +x ~/.local/bin/pdf-tools
-  ~/.local/bin/pdf-tools --install-desktop
+  curl -fL https://github.com/vamsikalagaturu/cuttle/releases/latest/download/cuttle-x86_64.AppImage -o ~/.local/bin/cuttle
+  chmod +x ~/.local/bin/cuttle
+  ~/.local/bin/cuttle --install-desktop
   ```
 
 - **Tarball**, for systems without FUSE, which the AppImage needs:
 
   ```sh
   mkdir -p ~/.local/opt ~/.local/bin
-  curl -fL https://github.com/vamsikalagaturu/pdf-tools/releases/latest/download/PDF-Tools-Linux-x86_64.tar.gz | tar xz -C ~/.local/opt
-  ln -sf ~/.local/opt/pdf-tools/bin/pdf-tools ~/.local/bin/pdf-tools
-  ~/.local/bin/pdf-tools --install-desktop
+  curl -fL https://github.com/vamsikalagaturu/cuttle/releases/latest/download/cuttle-linux-x86_64.tar.gz | tar xz -C ~/.local/opt
+  ln -sf ~/.local/opt/cuttle/bin/cuttle ~/.local/bin/cuttle
+  ~/.local/bin/cuttle --install-desktop
   ```
 
-`--install-desktop` adds PDF Tools to the applications menu and to "Open with" for PDFs. Run it again after moving the
-program; `--uninstall-desktop` removes the entry. For plain `pdf-tools` commands, `~/.local/bin` must be on your `PATH`.
+`--install-desktop` adds cuttle to the applications menu and to "Open with" for PDFs. Run it again after moving the
+program; `--uninstall-desktop` removes the entry. For plain `cuttle` commands, `~/.local/bin` must be on your `PATH`.
 
 ### macOS
 
 The `.dmg` on the [releases page](../../releases) is for Apple Silicon Macs
 with macOS 11 or later (on an Intel Mac, build it with `platform/macos/build.sh`).
 
-1. Download `PDF-Tools.dmg`, open it and drag **PDF Tools** onto **Applications**. Eject the disk image. To download
-   from Terminal: `curl -fLO https://github.com/vamsikalagaturu/pdf-tools/releases/latest/download/PDF-Tools.dmg`
+1. Download `cuttle.dmg`, open it and drag **cuttle** onto **Applications**. Eject the disk image. To download
+   from Terminal: `curl -fLO https://github.com/vamsikalagaturu/cuttle/releases/latest/download/cuttle.dmg`
 2. Open the app the first time. It is not notarized by Apple, so macOS blocks the first start:
-   - macOS 15 (Sequoia) and later: open PDF Tools from Applications, click **Done** on the warning, then go to
-     **System Settings > Privacy & Security**, scroll to "PDF Tools was blocked", click **Open Anyway** and confirm
+   - macOS 15 (Sequoia) and later: open cuttle from Applications, click **Done** on the warning, then go to
+     **System Settings > Privacy & Security**, scroll to "cuttle was blocked", click **Open Anyway** and confirm
      with your password.
-   - macOS 14 and earlier: Control-click (or right-click) PDF Tools in Applications, choose **Open**, then **Open**
+   - macOS 14 and earlier: Control-click (or right-click) cuttle in Applications, choose **Open**, then **Open**
      again.
 
-   Or, in Terminal, clear the download flag once instead: `xattr -dr com.apple.quarantine "/Applications/PDF Tools.app"`.
-3. To open PDFs with it by default: select a PDF in Finder, **File > Get Info**, under **Open with** pick PDF Tools,
+   Or, in Terminal, clear the download flag once instead: `xattr -dr com.apple.quarantine "/Applications/cuttle.app"`.
+3. To open PDFs with it by default: select a PDF in Finder, **File > Get Info**, under **Open with** pick cuttle,
    then **Change All...**.
-4. For the command line (`pdf-tools info file.pdf`, ...), link the binary into your PATH:
+4. For the command line (`cuttle info file.pdf`, ...), link the binary into your PATH:
 
    ```sh
    sudo mkdir -p /usr/local/bin
-   sudo ln -sf "/Applications/PDF Tools.app/Contents/MacOS/pdf-tools" /usr/local/bin/pdf-tools
+   sudo ln -sf "/Applications/cuttle.app/Contents/MacOS/cuttle" /usr/local/bin/cuttle
    ```
 
 An update is the same: drag the new version onto Applications and replace the old one.
 
 ### Windows
 
-`PDF-Tools-Windows.zip` is for 64-bit Windows 10 (version 1903) or 11.
+`cuttle-windows.zip` is for 64-bit Windows 10 (version 1903) or 11.
 
 1. Download it and unpack it anywhere, e.g. to `%LOCALAPPDATA%\Programs`, here in Command Prompt:
 
    ```bat
-   curl -fLO https://github.com/vamsikalagaturu/pdf-tools/releases/latest/download/PDF-Tools-Windows.zip
+   curl -fLO https://github.com/vamsikalagaturu/cuttle/releases/latest/download/cuttle-windows.zip
    mkdir "%LOCALAPPDATA%\Programs"
-   tar -xf PDF-Tools-Windows.zip -C "%LOCALAPPDATA%\Programs"
+   tar -xf cuttle-windows.zip -C "%LOCALAPPDATA%\Programs"
    ```
 
-   The `PDF-Tools` folder holds `pdf-tools.exe`, the OCR data and the Visual C++ runtime. The program is not signed,
+   The `cuttle` folder holds `cuttle.exe`, the OCR data and the Visual C++ runtime. The program is not signed,
    so SmartScreen may warn on the first start: **More info**, then **Run anyway**.
-2. `"%LOCALAPPDATA%\Programs\PDF-Tools\pdf-tools.exe" --install-desktop` adds PDF Tools to "Open with" for PDFs
+2. `"%LOCALAPPDATA%\Programs\cuttle\cuttle.exe" --install-desktop` adds cuttle to "Open with" for PDFs
    (`--uninstall-desktop` removes it); to make it the default, pick it under **Open with > Choose another app** with
    **Always** ticked.
 3. For the command line, add the folder to your PATH.
 
-Settings are in `%APPDATA%\pdf-tools`, reading positions and window messages in `%LOCALAPPDATA%\pdf-tools`.
+Settings are in `%APPDATA%\cuttle`, reading positions and window messages in `%LOCALAPPDATA%\cuttle`.
 
 ## Build
 
 ```sh
-platform/linux/build.sh      # ~/.cache/pdf-tools/linux/out/PDF_Tools-<arch>.AppImage and PDF-Tools-Linux-<arch>.tar.gz
-platform/macos/build.sh      # ~/Library/Caches/pdf-tools/macos/out/PDF-Tools.dmg
-platform/android/build.sh    # ~/.cache/pdf-tools-native/android/out/pdf-tools.apk (details: platform/android/README.md)
-platform/windows/build.sh    # in Git Bash: ~/.cache/pdf-tools/windows/out/PDF-Tools-Windows.zip
+platform/linux/build.sh      # ~/.cache/cuttle/linux/out/cuttle-<arch>.AppImage and cuttle-linux-<arch>.tar.gz
+platform/macos/build.sh      # ~/Library/Caches/cuttle/macos/out/cuttle.dmg
+platform/android/build.sh    # ~/.cache/cuttle-native/android/out/cuttle.apk (details: platform/android/README.md)
+platform/windows/build.sh    # in Git Bash: ~/.cache/cuttle/windows/out/cuttle-windows.zip
 ```
 
 Each `build.sh` first runs the `deps.sh` next to it, which downloads and builds the third-party libraries and
@@ -154,7 +154,7 @@ The builds leave out MuPDF's CJK and Noto fallback fonts: text in a font a PDF d
 system's fonts (fontconfig, /system/fonts, the macOS and Windows font folders). `PT_FONTS=full` before any of the
 scripts bundles them as well, for a larger program that needs no installed fonts.
 
-On Linux the script builds one `pdf-tools` binary (`~/.cache/pdf-tools/linux/build/pdf-tools`), with its
+On Linux the script builds one `cuttle` binary (`~/.cache/cuttle/linux/build/cuttle`), with its
 dependencies linked in except fontconfig, OpenGL and the window system's libraries, and packs it with the English
 OCR data, man page and icon as the AppImage and the tarball. Both run on the build machine's glibc or newer, so
 release builds come from Ubuntu 24.04. To install the binary instead, with its man page, desktop entry, icon and OCR data:
@@ -179,46 +179,50 @@ cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/raylib && cmake --build build &
 cmake --install build --prefix ~/.local
 ```
 
-Without raylib, `pdf-tools` is built with the commands only.
+Without raylib, `cuttle` is built with the commands only.
 
 ## Usage
 
 ```sh
-pdf-tools file.pdf                          # open in the window
-pdf-tools redact in.pdf -o out.pdf --text "Jane Doe" --regex 'DE\d{20}'
-pdf-tools info in.pdf
-pdf-tools convert book.epub -o book.pdf     # any supported document to PDF
-pdf-tools COMMAND --help
-pdf-tools --version
+cuttle file.pdf                          # open in the window
+cuttle redact in.pdf -o out.pdf --text "Jane Doe" --regex 'DE\d{20}'
+cuttle info in.pdf
+cuttle convert book.epub -o book.pdf     # any supported document to PDF
+cuttle COMMAND --help
+cuttle --version
 ```
 
-Commands print one JSON object and exit with a meaningful code; `pdf-tools --help` lists them,
-`AGENTS.md` (`pdf-tools help`) explains their conventions and exit codes. Others: `search`,
+Commands print one JSON object and exit with a meaningful code; `cuttle --help` lists them,
+`AGENTS.md` (`cuttle help`) explains their conventions and exit codes. Others: `search`,
 `render`, `annotate`, `draw`, `insert-text`, `insert-image`, `sign`, `bates`, `watermark`, `ocr`, `compare`,
 `export-images`, `scrub`, `inspect`, `comments` (annotations with page and line numbers, as Markdown or JSON).
 
-- Settings: `~/.config/pdf-tools/settings.toml`, on Windows `%APPDATA%\pdf-tools\settings.toml` (e.g.
+- Settings: `~/.config/cuttle/settings.toml`, on Windows `%APPDATA%\cuttle\settings.toml` (e.g.
   `editor_command = "code -g %f:%l"` for SyncTeX).
-- OCR needs Tesseract's `LANG.traineddata` in `$TESSDATA_PREFIX`, `$XDG_DATA_HOME/pdf-tools/tessdata` or the
+- OCR needs Tesseract's `LANG.traineddata` in `$TESSDATA_PREFIX`, `$XDG_DATA_HOME/cuttle/tessdata` or the
   system's data folders; the Linux tarball, the macOS app, the Windows zip and the APK include English.
 - LaTeX: compile with `-synctex=1`. Ctrl+click in the PDF opens the source line in your editor;
-  `pdf-tools --forward file.pdf LINE file.tex` shows a source line in the PDF.
+  `cuttle --forward file.pdf LINE file.tex` shows a source line in the PDF.
 - Interface size: View > Appearance > Interface size, or Ctrl+Alt++ / Ctrl+Alt+- (Ctrl+Alt+0: automatic); saved as
   `ui_scale` in the settings.
-- Logging: `PDF_TOOLS_LOG=error|warn|info|debug`.
+- Theme: Nord, dark by default. The menu's Dark / Light / System (System follows the desktop) is `scheme` in the
+  settings' `[theme]` table. Its colours come from the desktop theme's
+  `~/.local/state/omarchy/current/theme/colors.toml` when there is one, and each of its 13 roles (`accent`,
+  `background`, `foreground`, `blue`, ...) can be set there as `#rrggbb`, as in jackdaw and ferret.
+- Logging: `CUTTLE_LOG=error|warn|info|debug`.
 
 ### Updates
 
 At startup, at most once a day, the window asks GitHub for the latest release
-(`https://api.github.com/repos/vamsikalagaturu/pdf-tools/releases/latest`, with a `pdf-tools/VERSION` user agent
+(`https://api.github.com/repos/vamsikalagaturu/cuttle/releases/latest`, with a `cuttle/VERSION` user agent
 and nothing else). When it is newer, a bar offers **Update**: it downloads that release's package for this install,
 checks it against the SHA-256 digest GitHub lists for it, and replaces the AppImage, the tarball's folder, the macOS
 app or (after the app closes) the Windows folder; on Android the system installer takes the APK. A
 `build.sh install PREFIX` that you can write (e.g. `~/.local`) gets the tarball's files put over its own one by one
-(the program, `share/pdf-tools`, the man page, the launcher entry and icon; nothing else in the prefix is touched,
+(the program, `share/cuttle`, the man page, the launcher entry and icon; nothing else in the prefix is touched,
 and a launcher entry keeps its `Exec=` line). Installs the app cannot replace itself (a distro package, a prefix
-such as `/usr/local` you may not write, a folder it may not write) get the release page instead. Menu > Check for updates... checks now; Menu > Check for updates at startup (`check_updates` in the
-settings) turns the check off. Desktop downloads go through the system's `curl`. `pdf-tools update` does the same
+such as `/usr/local` you may not write, a folder it may not write) get the release page instead. Menu > About cuttle has Check for updates, and its Check for updates at startup
+(`check_updates` in the settings) turns the daily check off. Desktop downloads go through the system's `curl`. `cuttle update` does the same
 without the window (`--check` only reports, `--force` also replaces a development build); it is the only command that
 uses the network.
 

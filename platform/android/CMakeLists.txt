@@ -1,6 +1,6 @@
-# libpdf-tools.so for the Android APK; configured by build.sh with the NDK toolchain file.
+# libcuttle.so for the Android APK; configured by build.sh with the NDK toolchain file.
 cmake_minimum_required(VERSION 3.20)
-project(pdf_tools_android C CXX)
+project(cuttle_android C CXX)
 
 set(PT_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 set(MUPDF_THIRD_LIBRARY "" CACHE FILEPATH "libmupdf-third.a")
@@ -33,7 +33,7 @@ target_link_libraries(raylib PUBLIC log android EGL GLESv2 OpenSLES m)
 set(PT_GEN ${CMAKE_CURRENT_BINARY_DIR}/generated)
 pt_embed(${PT_GEN}/ui_font.c pt_ui_font ${PT_ROOT}/assets/NotoSans-Regular.ttf)
 pt_embed(${PT_GEN}/ui_font_bold.c pt_ui_font_bold ${PT_ROOT}/assets/NotoSans-Bold.ttf)
-pt_embed(${PT_GEN}/man.c pt_asset_man ${PT_ROOT}/man/pdf-tools.1)
+pt_embed(${PT_GEN}/man.c pt_asset_man ${PT_ROOT}/man/cuttle.1)
 file(GLOB PT_ICONS ${PT_ROOT}/assets/icons/*.svg)
 set(PT_ICON_SOURCES)
 set(PT_ICON_TABLE "")
@@ -51,14 +51,14 @@ configure_file(${PT_GEN}/icons.c.tmp ${PT_GEN}/icons.c COPYONLY)
 
 # All shared window sources, unmodified; new ones are picked up on reconfigure.
 file(GLOB PT_UI_SOURCES CONFIGURE_DEPENDS ${PT_ROOT}/src/ui/*.c)
-add_library(pdf-tools SHARED
+add_library(cuttle SHARED
   ${PT_UI_SOURCES} glfw_stubs.c android_main.c file_dialog_android.c
   ${PT_GEN}/ui_font.c ${PT_GEN}/ui_font_bold.c ${PT_GEN}/man.c ${PT_GEN}/icons.c ${PT_ICON_SOURCES})
-target_include_directories(pdf-tools PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${PT_ROOT}/src/ui ${PT_ROOT}/thirdparty/raygui/src
+target_include_directories(cuttle PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${PT_ROOT}/src/ui ${PT_ROOT}/thirdparty/raygui/src
   ${ANDROID_NDK}/sources/android/native_app_glue)
-target_compile_options(pdf-tools PRIVATE -Wall -Wextra -Wno-unused-parameter)
-# the system clipboard through PdfToolsActivity (android_main.c), in every window source
-target_compile_definitions(pdf-tools PRIVATE SetClipboardText=pt_android_set_clipboard GetClipboardText=pt_android_get_clipboard)
+target_compile_options(cuttle PRIVATE -Wall -Wextra -Wno-unused-parameter)
+# the system clipboard through CuttleActivity (android_main.c), in every window source
+target_compile_definitions(cuttle PRIVATE SetClipboardText=pt_android_set_clipboard GetClipboardText=pt_android_get_clipboard)
 # Android replacements for a few calls, swapped in per file so the shared sources stay untouched (android_glue.h).
 set_source_files_properties(${PT_ROOT}/src/ui/app.c PROPERTIES COMPILE_DEFINITIONS
   "InitWindow=pt_android_init_window;file_dialogs_poll=pt_android_frame;run_detached=pt_android_run_detached")
@@ -67,7 +67,7 @@ set_source_files_properties(${PT_ROOT}/src/ui/document.c PROPERTIES COMPILE_DEFI
 set_source_files_properties(${PT_ROOT}/src/ui/widgets.c PROPERTIES COMPILE_DEFINITIONS
   "GetCharPressed=pt_android_char_pressed;GetMouseWheelMoveV=pt_android_wheel")
 # C++ link for MuPDF's HarfBuzz (libc++ is static: ANDROID_STL defaults to c++_static)
-set_target_properties(pdf-tools PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(cuttle PROPERTIES LINKER_LANGUAGE CXX)
 # -u keeps the glue's entry point, which nothing in the library references
-target_link_options(pdf-tools PRIVATE -u ANativeActivity_onCreate -Wl,--no-undefined -Wl,--gc-sections)
-target_link_libraries(pdf-tools PRIVATE ptcli raylib android log EGL GLESv2 m)
+target_link_options(cuttle PRIVATE -u ANativeActivity_onCreate -Wl,--no-undefined -Wl,--gc-sections)
+target_link_libraries(cuttle PRIVATE ptcli raylib android log EGL GLESv2 m)

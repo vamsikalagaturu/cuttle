@@ -6,6 +6,6 @@
  * on an error it prints {"error": ...} and exits with 1 itself. */
 int pt_cli_main(int argc, char **argv);
 int pt_cli_is_command(const char *name);
-const char *pt_cli_guide(void); /* AGENTS.md, compiled in: what `pdf-tools help` prints */
+const char *pt_cli_guide(void); /* AGENTS.md, compiled in: what `cuttle help` prints */
 void pt_cli_usage(FILE *out);
 #endif

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<!-- Embedded in pdf-tools.exe and the tests: UTF-8 as the process code page, so file names, arguments and the
+<!-- Embedded in cuttle.exe and the tests: UTF-8 as the process code page, so file names, arguments and the
      environment reach the C runtime and the "A" calls as UTF-8 (Windows 10 1903+). -->
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity type="win32" name="PDFTools" version="1.0.0.0"/>
+  <assemblyIdentity type="win32" name="Cuttle" version="1.0.0.0"/>
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>
       <!-- Windows 10 and 11 -->

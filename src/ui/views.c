@@ -2499,7 +2499,7 @@ static int ocr_frame(dialog *d, Rectangle b)
         free(shown_dir);
     } else {
         char *data = pt_data_dir(),
-             *msg = pt_format("No %s.traineddata found. Put the Tesseract language file in\n%s/pdf-tools/tessdata",
+             *msg = pt_format("No %s.traineddata found. Put the Tesseract language file in\n%s/cuttle/tessdata",
                               text_get(&o->language), data);
         draw_text(msg, b.x, y, FS_SMALL, F_REGULAR, pal.window_text);
         free(msg), free(data);

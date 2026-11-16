@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Downloads and builds the third-party libraries pdf-tools links on macOS (this Mac's architecture, macOS 11+), from
+# Downloads and builds the third-party libraries cuttle links on macOS (this Mac's architecture, macOS 11+), from
 # the sources pinned in platform/versions.sh: MuPDF (with Tesseract, and mutool to draw the app icon),
 # OpenSSL and raylib, plus raygui and Tesseract's English data. Everything goes under $PT_MACOS_OUT (default
-# ~/Library/Caches/pdf-tools/macos), except the raylib and raygui sources (thirdparty/ in the repo); what is
+# ~/Library/Caches/cuttle/macos), except the raylib and raygui sources (thirdparty/ in the repo); what is
 # already there is reused. Needs the Xcode command line tools and CMake.
 # build.sh sources this file first and uses the paths it sets; run it alone (platform/macos/deps.sh) to only build
 # the libraries, as CI does before caching them.
@@ -11,7 +11,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd "$HERE/../.." && pwd)
 . "$REPO/platform/versions.sh"
-ROOT=${PT_MACOS_OUT:-$HOME/Library/Caches/pdf-tools/macos}
+ROOT=${PT_MACOS_OUT:-$HOME/Library/Caches/cuttle/macos}
 JOBS=$(sysctl -n hw.ncpu)
 export MACOSX_DEPLOYMENT_TARGET=11.0
 

@@ -1,10 +1,10 @@
-/* Per-user app launcher integration: the .desktop entry and icon behind `pdf-tools --install-desktop`. */
+/* Per-user app launcher integration: the .desktop entry and icon behind `cuttle --install-desktop`. */
 #include "pt_core.h"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#define DESKTOP_ID "pdf-tools"
+#define DESKTOP_ID "cuttle"
 
 char *pt_data_dir(void)
 {

@@ -1,4 +1,4 @@
-/* The file dialog on Android: the system document picker (Storage Access Framework) via PdfToolsActivity.
+/* The file dialog on Android: the system document picker (Storage Access Framework) via CuttleActivity.
  * The app has no storage permission and the window works on file paths, so a picked document is copied to
  * cache/saf/<hash of its URI>/<name>. Copies remember their URI (documents.tsv in
  * the app's files folder) and are written back to it whenever the app changes them: Save replaces the copy,
@@ -17,7 +17,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOG(...) __android_log_print(ANDROID_LOG_INFO, "pdf-tools", __VA_ARGS__)
+#define LOG(...) __android_log_print(ANDROID_LOG_INFO, "cuttle", __VA_ARGS__)
 #define FD_REEXPORT 100
 
 char *pt_android_cache_dir;

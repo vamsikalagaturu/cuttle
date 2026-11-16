@@ -1,4 +1,4 @@
-package io.github.vamsikalagaturu.pdftools;
+package io.github.vamsikalagaturu.cuttle;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;

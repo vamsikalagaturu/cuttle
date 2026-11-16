@@ -1,4 +1,4 @@
-/* The one entry point of pdf-tools: commands go to cli.c, everything else to the window (app.c) when it is built
+/* The one entry point of cuttle: commands go to cli.c, everything else to the window (app.c) when it is built
  * in. Without raylib (no PT_GUI) the binary has only the commands. */
 #include "pt_cli.h"
 #include "pt_core.h"
@@ -13,6 +13,8 @@ int main(int argc, char **argv)
 #ifdef _WIN32
     pt_win_init();
 #endif
+    /* before any command or the window can create the new folders, which would stop the old ones moving */
+    pt_migrate_legacy();
 #ifdef PT_GUI
     /* a first word that is neither an option nor an existing file is a mistyped command: it gets an error, not a
      * window that would block the caller */

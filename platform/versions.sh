@@ -4,7 +4,7 @@
 # MUPDF_FONT_CFLAGS' -D as it is.)
 
 # the app's own version, from project() in CMakeLists.txt
-PT_VERSION=$(sed -n 's/^project(pdf_tools VERSION \([0-9.]*\).*/\1/p' "$(dirname "${BASH_SOURCE[0]}")/../CMakeLists.txt")
+PT_VERSION=$(sed -n 's/^project(cuttle VERSION \([0-9.]*\).*/\1/p' "$(dirname "${BASH_SOURCE[0]}")/../CMakeLists.txt")
 
 # optimised for speed, each function and object in its own section, so the final link drops what nothing uses
 SIZE_CFLAGS="-O2 -ffunction-sections -fdata-sections"

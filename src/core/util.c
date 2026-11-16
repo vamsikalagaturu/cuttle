@@ -460,7 +460,7 @@ void pt_json_close_to_top(pt_json *j)
 
 /* ---- the log ---- */
 
-/* Messages at or above the level PDF_TOOLS_LOG names (error, warn, info, debug; default warn) go to the sink,
+/* Messages at or above the level CUTTLE_LOG names (error, warn, info, debug; default warn) go to the sink,
  * stderr unless the window sets its own. */
 static pt_log_sink sink;
 static int threshold = -1;
@@ -470,7 +470,7 @@ static const char *LOG_NAMES[] = {"debug", "info", "warn", "error"};
 pt_log_level pt_log_threshold(void)
 {
     if (threshold < 0) {
-        const char *env = getenv("PDF_TOOLS_LOG");
+        const char *env = getenv("CUTTLE_LOG");
         threshold = PT_LOG_WARN;
         for (int i = 0; env && i < 4; i++)
             if (!strcmp(env, LOG_NAMES[i])) threshold = i;
@@ -489,7 +489,7 @@ void pt_log(pt_log_level level, const char *fmt, ...)
     vsnprintf(msg, sizeof msg, fmt, ap);
     va_end(ap);
     if (sink) sink(level, msg);
-    else fprintf(stderr, "pdf-tools: %s: %s\n", LOG_NAMES[level], msg);
+    else fprintf(stderr, "cuttle: %s: %s\n", LOG_NAMES[level], msg);
 }
 
 static void mupdf_warning(void *user, const char *message) { (void)user, pt_log(PT_LOG_INFO, "mupdf: %s", message); }

@@ -229,14 +229,14 @@ void tab_free(tab *t)
     free(t);
 }
 
-/* ---- reading positions: $XDG_DATA_HOME/pdf-tools/positions.tsv, "path\tpage\tzoom\ttop" per line, newest
+/* ---- reading positions: $XDG_DATA_HOME/cuttle/positions.tsv, "path\tpage\tzoom\ttop" per line, newest
  * first; zoom 0 = fit width, -1 = fit height; top = the view's top edge below the page's top, in page points ---- */
 
 #define POSITIONS_MAX 200
 
 static char *positions_file(void)
 {
-    char *base = pt_data_dir(), *dir = pt_format("%s/pdf-tools", base);
+    char *base = pt_data_dir(), *dir = pt_format("%s/cuttle", base);
     pt_mkdirs(dir);
     char *path = pt_format("%s/positions.tsv", dir);
     free(base), free(dir);
@@ -270,7 +270,7 @@ static int position_of(const char *file, int *page, float *zoom, float *top)
     return found;
 }
 
-/* ---- bookmarks: $XDG_DATA_HOME/pdf-tools/bookmarks.tsv, "path\tpage\ttop\tchar\tname" per line, in the order they
+/* ---- bookmarks: $XDG_DATA_HOME/cuttle/bookmarks.tsv, "path\tpage\ttop\tchar\tname" per line, in the order they
  * were added; char is a vim mark's character "x,y" or "-". Lines without char (before 0.5.0) still read. ---- */
 
 /* a line after its "path\t" into m (name malloc'd); 0 when it is not one */
@@ -291,7 +291,7 @@ static int parse_mark(const char *rest, user_mark *m)
 
 static char *marks_file(void)
 {
-    char *base = pt_data_dir(), *dir = pt_format("%s/pdf-tools", base);
+    char *base = pt_data_dir(), *dir = pt_format("%s/cuttle", base);
     pt_mkdirs(dir);
     char *path = pt_format("%s/bookmarks.tsv", dir);
     free(base), free(dir);
@@ -2547,7 +2547,7 @@ void tab_copy_path(tab *t)
 #ifdef __ANDROID__
 char *pt_java(const char *method, int nargs, ...);
 
-/* the copy goes under the cache's share/ folder, which PdfToolsActivity's provider serves */
+/* the copy goes under the cache's share/ folder, which CuttleActivity's provider serves */
 void tab_share(tab *t)
 {
     fz_buffer *data = tab_output(t, NULL);

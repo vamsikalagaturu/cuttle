@@ -1,5 +1,5 @@
 /* Updates in the window. At startup (setting check_updates; at most once a day, remembered in
- * pt_data_dir()/pdf-tools/update-check) a background thread asks for the latest release. When it is newer, a bar under
+ * pt_data_dir()/cuttle/update-check) a background thread asks for the latest release. When it is newer, a bar under
  * the tab strip offers Update, which runs on such a thread too; the work itself is pt_update_*. Installs the app cannot
  * replace (a distro package, a prefix the user may not write) get the release page instead. The main loop is woken once
  * when a job ends and draws nothing while one runs, except the bar's progress during a download. */
@@ -84,7 +84,7 @@ static int start_job(job *j)
 
 static char *state_file(void)
 {
-    char *base = pt_data_dir(), *path = pt_format("%s/pdf-tools/update-check", base);
+    char *base = pt_data_dir(), *path = pt_format("%s/cuttle/update-check", base);
     free(base);
     return path;
 }
@@ -197,9 +197,9 @@ static void installed(job *j)
         return;
     }
 #ifdef __ANDROID__
-    char *r = pt_java("installApk", 1, "pdf-tools.apk");
+    char *r = pt_java("installApk", 1, "cuttle.apk");
     if (!r) offer_page("The system installer could not be opened.");
-    else if (!strcmp(r, "settings")) status("Allow PDF Tools to install apps; the installer opens after that", 10);
+    else if (!strcmp(r, "settings")) status("Allow cuttle to install apps; the installer opens after that", 10);
     free(r);
 #else
     bar_hidden = 1;
@@ -219,11 +219,11 @@ static void installed(job *j)
 
 void update_start(void)
 {
-    const char *url = getenv("PDF_TOOLS_UPDATE_URL");
+    const char *url = getenv("CUTTLE_UPDATE_URL");
 #ifdef __ANDROID__
-    /* apps get no environment of their own: `adb shell setprop debug.pdftools.update_url URL` */
+    /* apps get no environment of their own: `adb shell setprop debug.cuttle.update_url URL` */
     static char prop[PROP_VALUE_MAX];
-    if ((!url || !*url) && __system_property_get("debug.pdftools.update_url", prop) > 0) url = prop;
+    if ((!url || !*url) && __system_property_get("debug.cuttle.update_url", prop) > 0) url = prop;
 #endif
     pt_update_use_url(url);
     if (!pt_settings_int(&app.settings, "check_updates")) return;
@@ -313,18 +313,50 @@ void update_bar(Rectangle r)
     free(shown);
 }
 
-static void m_update(void *ctx, intptr_t a)
+/* About: the version and licences, and the updates (as in jackdaw's Settings > About and ferret's About) */
+static int about_frame(dialog *d, Rectangle b)
 {
-    (void)ctx;
-    if (a == 0) start_check(1);
-    else pt_settings_set_int(&app.settings, "check_updates", !pt_settings_int(&app.settings, "check_updates"));
+    /* the logo beside the name, version and what it does */
+    const float logo = 64, tx = b.x + logo + 16, tw = b.width - logo - 16;
+    draw_logo((Rectangle){b.x, b.y, logo, logo});
+    draw_text_in(APP_NAME, (Rectangle){tx, b.y, tw, 26}, FS_LARGE, F_BOLD, pal.window_text, -1);
+    draw_text_in("Version " PT_VERSION, (Rectangle){tx, b.y + 24, tw, 22}, FS_NORMAL, F_REGULAR, pal.disabled_text, -1);
+    draw_text_in("View, redact, fill, annotate, sign and merge PDFs.", (Rectangle){tx, b.y + 46, tw, 22}, FS_NORMAL,
+                 F_REGULAR, pal.window_text, -1);
+    draw_text_in(REPO_URL, (Rectangle){tx, b.y + 70, tw, 22}, FS_NORMAL, F_REGULAR, pal.link, -1);
+
+    /* the updates, on one row */
+    float y = b.y + 108;
+    ui_separator_h(b.x, b.x + b.width, y);
+    y += 14;
+    const char *check_label = running ? "Checking..." : "Check for updates";
+    float cw = button_width(check_label, "rotate-cw", 0);
+    int at_start = pt_settings_int(&app.settings, "check_updates");
+    if (ui_checkbox(ui_id(d, 1), (Rectangle){b.x, y + 2, b.width - cw - 16, 28}, "Check for updates at startup",
+                    &at_start, 0))
+        pt_settings_set_int(&app.settings, "check_updates", at_start);
+    if (ui_button(ui_id(d, 2), (Rectangle){b.x + b.width - cw, y, cw, 32}, check_label, "rotate-cw",
+                  running ? B_DISABLED : 0, NULL))
+        start_check(1);
+    y += 32 + 14;
+    ui_separator_h(b.x, b.x + b.width, y);
+
+    /* the licences as small print beside Close */
+    Rectangle close = {b.x + b.width - 100, b.y + b.height - 32, 100, 32};
+    draw_text_in("AGPL-3.0-or-later. MuPDF, raylib, raygui.", (Rectangle){b.x, close.y - 4, close.x - b.x - 12, 20},
+                 FS_SMALL, F_REGULAR, pal.disabled_text, -1);
+    draw_text_in("Icons: Lucide (ISC). Font: Noto Sans (OFL-1.1).", (Rectangle){b.x, close.y + 16, close.x - b.x - 12, 20},
+                 FS_SMALL, F_REGULAR, pal.disabled_text, -1);
+    return ui_button(ui_id(d, 3), close, "Close", NULL, B_PRIMARY, NULL);
 }
 
-void update_menu_items(ui_menu *m)
+static void about_free(dialog *d) { (void)d; }
+
+void about_dialog(void)
 {
-    menu_item(m, "Check for updates...", "rotate-cw", NULL, m_update, NULL, 0, !running, 0);
-    menu_item(m, "Check for updates at startup", "history", NULL, m_update, NULL, 1, 1,
-              pt_settings_int(&app.settings, "check_updates"));
+    dialog *d = calloc(1, sizeof *d);
+    *d = (dialog){"About " APP_NAME, 560, 250, about_frame, about_free, NULL, 1};
+    dialog_push(d);
 }
 
 #if defined(__linux__) && !defined(__ANDROID__)

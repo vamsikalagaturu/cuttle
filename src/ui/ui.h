@@ -6,7 +6,7 @@
 #include "raylib.h"
 #include <stdint.h>
 
-#define APP_ID "pdf-tools"
+#define APP_ID "cuttle"
 /* logical width below which toolbars collapse and the sidebar overlays the page (phones) */
 #define NARROW_W 760.0f
 /* logical window size below which the narrow toolbar and the compact Home page no longer fit */
@@ -30,16 +30,16 @@ typedef struct {
 } ui_palette;
 
 extern ui_palette pal;
-void theme_apply(const char *mode); /* "light", else dark; the accent colour comes from app.settings */
+void theme_apply(const char *mode); /* "light", else dark */
 Color with_alpha(Color c, int a);
 Color rgb3(const unsigned char rgb[3]);
 
 /* ---- fonts and text ---- */
 typedef enum { F_REGULAR, F_BOLD } font_kind;
 
-#define FS_SMALL 12.0f
-#define FS_NORMAL 14.0f
-#define FS_LARGE 18.0f
+#define FS_SMALL 14.0f
+#define FS_NORMAL 16.0f
+#define FS_LARGE 20.0f
 void ui_fonts_load(void);
 float text_width(const char *s, float size, font_kind f);
 void draw_text(const char *s, float x, float y, float size, font_kind f, Color c);
@@ -84,7 +84,7 @@ typedef struct {
     float scale, w, h;  /* logical window size */
     float density;      /* framebuffer pixels per screen unit: 2 on a Retina Mac, else 1 */
     float scale_choice; /* interface size from the settings; 0 = automatic */
-    int scale_chosen;   /* the user changed the interface size in this run, which outranks PDF_TOOLS_SCALE */
+    int scale_chosen;   /* the user changed the interface size in this run, which outranks CUTTLE_SCALE */
     Vector2 mouse;
     int pressed, released, down, rpressed, rreleased, dclick, mpressed;
     float wheel, wheel_x;
@@ -497,7 +497,7 @@ void update_start(void); /* at startup: checks when check_updates is on and a da
 void update_poll(void);  /* each turn of the main loop: takes a finished check or download; never blocks */
 float update_bar_height(void); /* 0 while no bar is shown */
 void update_bar(Rectangle r);  /* the "is available" bar with Update and Later, or the download's progress */
-void update_menu_items(ui_menu *m);
+void about_dialog(void); /* version, licences, Check for updates and the startup check */
 /* at exit, after ipc_stop(): stops a running download, starts the updated program when a restart was asked for and
  * on Windows the helper that swaps the folders */
 void update_stop(void);
