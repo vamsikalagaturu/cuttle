@@ -30,11 +30,11 @@ jobs:
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-linux/dl
-            ${{ runner.temp }}/pdf-tools-linux/src
-            ${{ runner.temp }}/pdf-tools-linux/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-linux/openssl-install-*
-            ${{ runner.temp }}/pdf-tools-linux/raylib-install-*
+            ${{ runner.temp }}/cuttle-linux/dl
+            ${{ runner.temp }}/cuttle-linux/src
+            ${{ runner.temp }}/cuttle-linux/mupdf-build-*
+            ${{ runner.temp }}/cuttle-linux/openssl-install-*
+            ${{ runner.temp }}/cuttle-linux/raylib-install-*
       - name: Compilers, pkg-config, fontconfig, raylib's X11/Wayland/GL headers
         if: steps.restore.outputs.cache-hit != 'true' || github.event_name != 'push'
         # without man-db's index rebuild, which can hang the install for many minutes on these runners
@@ -47,20 +47,20 @@ jobs:
             wayland-protocols
       - name: Build the libraries (platform/linux/deps.sh)
         if: steps.restore.outputs.cache-hit != 'true'
-        run: PT_LINUX_OUT="$RUNNER_TEMP/pdf-tools-linux" platform/linux/deps.sh
+        run: PT_LINUX_OUT="$RUNNER_TEMP/cuttle-linux" platform/linux/deps.sh
       - uses: actions/cache/save@v4
         if: steps.restore.outputs.cache-hit != 'true'
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-linux/dl
-            ${{ runner.temp }}/pdf-tools-linux/src
-            ${{ runner.temp }}/pdf-tools-linux/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-linux/openssl-install-*
-            ${{ runner.temp }}/pdf-tools-linux/raylib-install-*
+            ${{ runner.temp }}/cuttle-linux/dl
+            ${{ runner.temp }}/cuttle-linux/src
+            ${{ runner.temp }}/cuttle-linux/mupdf-build-*
+            ${{ runner.temp }}/cuttle-linux/openssl-install-*
+            ${{ runner.temp }}/cuttle-linux/raylib-install-*
       - name: Build and test (platform/linux/build.sh check)
         if: github.event_name != 'push'
-        run: PT_LINUX_OUT="$RUNNER_TEMP/pdf-tools-linux" platform/linux/build.sh check
+        run: PT_LINUX_OUT="$RUNNER_TEMP/cuttle-linux" platform/linux/build.sh check
   android:
     runs-on: ubuntu-latest
     env:
@@ -76,10 +76,10 @@ jobs:
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-android/dl
-            ${{ runner.temp }}/pdf-tools-android/src
-            ${{ runner.temp }}/pdf-tools-android/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-android/openssl-install-*
+            ${{ runner.temp }}/cuttle-android/dl
+            ${{ runner.temp }}/cuttle-android/src
+            ${{ runner.temp }}/cuttle-android/mupdf-build-*
+            ${{ runner.temp }}/cuttle-android/openssl-install-*
       - name: Ninja, Android build-tools, platform and NDK
         if: steps.restore.outputs.cache-hit != 'true' || github.event_name != 'push'
         timeout-minutes: 15
@@ -93,21 +93,21 @@ jobs:
       - name: Build the libraries (platform/android/deps.sh)
         if: steps.restore.outputs.cache-hit != 'true'
         run: |
-          PT_ANDROID_OUT="$RUNNER_TEMP/pdf-tools-android" ANDROID_NDK="$ANDROID_HOME/ndk/$NDK_VERSION" \
+          PT_ANDROID_OUT="$RUNNER_TEMP/cuttle-android" ANDROID_NDK="$ANDROID_HOME/ndk/$NDK_VERSION" \
             platform/android/deps.sh
       - uses: actions/cache/save@v4
         if: steps.restore.outputs.cache-hit != 'true'
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-android/dl
-            ${{ runner.temp }}/pdf-tools-android/src
-            ${{ runner.temp }}/pdf-tools-android/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-android/openssl-install-*
-      - name: Compile libpdf-tools.so (platform/android/build.sh check)
+            ${{ runner.temp }}/cuttle-android/dl
+            ${{ runner.temp }}/cuttle-android/src
+            ${{ runner.temp }}/cuttle-android/mupdf-build-*
+            ${{ runner.temp }}/cuttle-android/openssl-install-*
+      - name: Compile libcuttle.so (platform/android/build.sh check)
         if: github.event_name != 'push'
         run: |
-          PT_ANDROID_OUT="$RUNNER_TEMP/pdf-tools-android" ANDROID_NDK="$ANDROID_HOME/ndk/$NDK_VERSION" \
+          PT_ANDROID_OUT="$RUNNER_TEMP/cuttle-android" ANDROID_NDK="$ANDROID_HOME/ndk/$NDK_VERSION" \
             platform/android/build.sh check
   macos:
     runs-on: macos-latest
@@ -124,27 +124,27 @@ jobs:
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-macos/dl
-            ${{ runner.temp }}/pdf-tools-macos/src
-            ${{ runner.temp }}/pdf-tools-macos/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-macos/openssl-install-*
-            ${{ runner.temp }}/pdf-tools-macos/raylib-install-*
+            ${{ runner.temp }}/cuttle-macos/dl
+            ${{ runner.temp }}/cuttle-macos/src
+            ${{ runner.temp }}/cuttle-macos/mupdf-build-*
+            ${{ runner.temp }}/cuttle-macos/openssl-install-*
+            ${{ runner.temp }}/cuttle-macos/raylib-install-*
       - name: Build the libraries (platform/macos/deps.sh)
         if: steps.restore.outputs.cache-hit != 'true'
-        run: PT_MACOS_OUT="$RUNNER_TEMP/pdf-tools-macos" platform/macos/deps.sh
+        run: PT_MACOS_OUT="$RUNNER_TEMP/cuttle-macos" platform/macos/deps.sh
       - uses: actions/cache/save@v4
         if: steps.restore.outputs.cache-hit != 'true'
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-macos/dl
-            ${{ runner.temp }}/pdf-tools-macos/src
-            ${{ runner.temp }}/pdf-tools-macos/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-macos/openssl-install-*
-            ${{ runner.temp }}/pdf-tools-macos/raylib-install-*
+            ${{ runner.temp }}/cuttle-macos/dl
+            ${{ runner.temp }}/cuttle-macos/src
+            ${{ runner.temp }}/cuttle-macos/mupdf-build-*
+            ${{ runner.temp }}/cuttle-macos/openssl-install-*
+            ${{ runner.temp }}/cuttle-macos/raylib-install-*
       - name: Build and test (platform/macos/build.sh check)
         if: github.event_name != 'push'
-        run: PT_MACOS_OUT="$RUNNER_TEMP/pdf-tools-macos" platform/macos/build.sh check
+        run: PT_MACOS_OUT="$RUNNER_TEMP/cuttle-macos" platform/macos/build.sh check
   windows:
     runs-on: windows-latest
     defaults:
@@ -168,22 +168,22 @@ jobs:
           key: ${{ steps.key.outputs.key }}
           # MuPDF builds inside its source tree (src/mupdf-<fonts>), so src holds its build too
           path: |
-            ${{ runner.temp }}/pdf-tools-windows/dl
-            ${{ runner.temp }}/pdf-tools-windows/src
-            ${{ runner.temp }}/pdf-tools-windows/openssl-install
-            ${{ runner.temp }}/pdf-tools-windows/raylib-install
+            ${{ runner.temp }}/cuttle-windows/dl
+            ${{ runner.temp }}/cuttle-windows/src
+            ${{ runner.temp }}/cuttle-windows/openssl-install
+            ${{ runner.temp }}/cuttle-windows/raylib-install
       - name: Build the libraries (platform/windows/deps.sh, MSVC)
         if: steps.restore.outputs.cache-hit != 'true'
-        run: PT_WINDOWS_OUT="$(cygpath -u "$RUNNER_TEMP")/pdf-tools-windows" platform/windows/deps.sh
+        run: PT_WINDOWS_OUT="$(cygpath -u "$RUNNER_TEMP")/cuttle-windows" platform/windows/deps.sh
       - uses: actions/cache/save@v4
         if: steps.restore.outputs.cache-hit != 'true'
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-windows/dl
-            ${{ runner.temp }}/pdf-tools-windows/src
-            ${{ runner.temp }}/pdf-tools-windows/openssl-install
-            ${{ runner.temp }}/pdf-tools-windows/raylib-install
+            ${{ runner.temp }}/cuttle-windows/dl
+            ${{ runner.temp }}/cuttle-windows/src
+            ${{ runner.temp }}/cuttle-windows/openssl-install
+            ${{ runner.temp }}/cuttle-windows/raylib-install
       - name: Build and test (platform/windows/build.sh check, MSVC)
         if: github.event_name != 'push'
-        run: PT_WINDOWS_OUT="$(cygpath -u "$RUNNER_TEMP")/pdf-tools-windows" platform/windows/build.sh check
+        run: PT_WINDOWS_OUT="$(cygpath -u "$RUNNER_TEMP")/cuttle-windows" platform/windows/build.sh check

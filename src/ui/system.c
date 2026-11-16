@@ -225,7 +225,7 @@ static socklen_t socket_address(int pid, struct sockaddr_un *addr)
 static void remove_socket(int pid) { (void)pid; }
 #else
 /* elsewhere (macOS) a socket file next to the window's state, ipc_dir()/<pid>.sock; ipc_dir() is short there
- * (/tmp/pdf-tools-<uid>: no $XDG_RUNTIME_DIR), well within sun_path's 104 bytes */
+ * (/tmp/cuttle-<uid>: no $XDG_RUNTIME_DIR), well within sun_path's 104 bytes */
 static socklen_t socket_address(int pid, struct sockaddr_un *addr)
 {
     memset(addr, 0, sizeof *addr);
@@ -596,7 +596,7 @@ static int send_to_printer(print_job *j)
 #else
 static int send_to_printer(print_job *j)
 {
-    char tmp[] = "/tmp/pdf-tools-print-XXXXXX";
+    char tmp[] = "/tmp/cuttle-print-XXXXXX";
     int fd = mkstemp(tmp);
     if (fd < 0) return -1;
     int ok = write(fd, j->data->data, j->data->len) == (ssize_t)j->data->len;

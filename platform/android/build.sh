@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Builds libpdf-tools.so (raylib, core, window) for arm64-v8a against the libraries from deps.sh (MuPDF with
+# Builds libcuttle.so (raylib, core, window) for arm64-v8a against the libraries from deps.sh (MuPDF with
 # Tesseract and OpenSSL, built from the sources pinned in platform/versions.sh) and packages a debug-signed
-# APK, without Gradle. `build.sh check` only compiles libpdf-tools.so (no APK).
-# Output: $PT_ANDROID_OUT/out/pdf-tools.apk (default ~/.cache/pdf-tools-native/android, which also keeps the debug
+# APK, without Gradle. `build.sh check` only compiles libcuttle.so (no APK).
+# Output: $PT_ANDROID_OUT/out/cuttle.apk (default ~/.cache/cuttle-native/android, which also keeps the debug
 # signing key: a new key would stop the APK installing over an older one). Re-runs are incremental.
 # With PT_ANDROID_KEYSTORE (a .jks) and PT_ANDROID_KEYSTORE_PASSWORD set, the APK is signed with that keystore's key
-# `pdf-tools` (key password = store password) instead, as releases are.
+# `cuttle` (key password = store password) instead, as releases are.
 # MuPDF's CJK and Noto fallback fonts are left out (fonts a PDF does not embed come from /system/fonts);
 # PT_FONTS=full bundles them.
 set -euo pipefail
@@ -38,7 +38,7 @@ fi
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 . "$HERE/deps.sh"
 
-step "libpdf-tools.so (raylib, core, window)"
+step "libcuttle.so (raylib, core, window)"
 cmake --fresh -S "$HERE" -B "$ROOT/build" -G Ninja \
     -DCMAKE_TOOLCHAIN_FILE="$NDK/build/cmake/android.toolchain.cmake" \
     -DANDROID_ABI=$ABI -DANDROID_PLATFORM=android-$MIN_API -DCMAKE_BUILD_TYPE=Release \
@@ -48,7 +48,7 @@ cmake --fresh -S "$HERE" -B "$ROOT/build" -G Ninja \
     -DMUPDF_THIRD_LIBRARY="$MUPDF_OUT/libmupdf-third.a" \
     -DOPENSSL_ROOT_DIR="$OPENSSL_OUT" -DOPENSSL_USE_STATIC_LIBS=ON -DCMAKE_FIND_ROOT_PATH="$OPENSSL_OUT" \
     -DPKG_CONFIG_EXECUTABLE="$ROOT/nopkgconfig/pkg-config" >/dev/null
-cmake --build "$ROOT/build" --target pdf-tools -j"$JOBS"
+cmake --build "$ROOT/build" --target cuttle -j"$JOBS"
 if [ "$MODE" = check ]; then exit 0; fi
 
 step "dex"
@@ -71,23 +71,23 @@ IFS=. read -r V_MAJOR V_MINOR V_PATCH <<<"$PT_VERSION"
     --version-name "$PT_VERSION" --version-code $((V_MAJOR * 10000 + V_MINOR * 100 + V_PATCH))
 
 step "package"
-"$TC/llvm-strip" --strip-unneeded -o "$APK/lib/$ABI/libpdf-tools.so" "$ROOT/build/libpdf-tools.so"
+"$TC/llvm-strip" --strip-unneeded -o "$APK/lib/$ABI/libcuttle.so" "$ROOT/build/libcuttle.so"
 cp "$APK/dex/classes.dex" "$APK/classes.dex"
-(cd "$APK" && zip -q -r unsigned.apk classes.dex "lib/$ABI/libpdf-tools.so")
+(cd "$APK" && zip -q -r unsigned.apk classes.dex "lib/$ABI/libcuttle.so")
 "$BT/zipalign" -P 16 -f 4 "$APK/unsigned.apk" "$APK/aligned.apk"
 
 mkdir -p "$ROOT/out"
 if [ -n "${PT_ANDROID_KEYSTORE:-}" ]; then
     # env: keeps the password off the command line
-    "$BT/apksigner" sign --ks "$PT_ANDROID_KEYSTORE" --ks-key-alias pdf-tools \
+    "$BT/apksigner" sign --ks "$PT_ANDROID_KEYSTORE" --ks-key-alias cuttle \
         --ks-pass env:PT_ANDROID_KEYSTORE_PASSWORD --key-pass env:PT_ANDROID_KEYSTORE_PASSWORD \
-        --out "$ROOT/out/pdf-tools.apk" "$APK/aligned.apk"
+        --out "$ROOT/out/cuttle.apk" "$APK/aligned.apk"
 else
     KS=$ROOT/debug.keystore
     [ -f "$KS" ] || keytool -genkeypair -keystore "$KS" -storepass android -keypass android -alias androiddebugkey \
         -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
     "$BT/apksigner" sign --ks "$KS" --ks-pass pass:android --key-pass pass:android --ks-key-alias androiddebugkey \
-        --out "$ROOT/out/pdf-tools.apk" "$APK/aligned.apk"
+        --out "$ROOT/out/cuttle.apk" "$APK/aligned.apk"
 fi
-"$BT/apksigner" verify "$ROOT/out/pdf-tools.apk"
-ls -l "$ROOT/out/pdf-tools.apk"
+"$BT/apksigner" verify "$ROOT/out/cuttle.apk"
+ls -l "$ROOT/out/cuttle.apk"

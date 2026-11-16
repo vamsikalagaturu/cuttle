@@ -261,7 +261,7 @@ int pt_keys_save(const char *path, const pt_bindings *b)
 {
     keys_text t = {0};
     put(&t,
-        "# PDF Tools keyboard shortcuts changed from the defaults (Menu > Keyboard shortcuts... writes this file).\n"
+        "# cuttle keyboard shortcuts changed from the defaults (Menu > Keyboard shortcuts... writes this file).\n"
         "# One line per action: action = \"Ctrl+Shift+X\", or a list for several: action = [\"Ctrl+F\", \"F3\"];\n"
         "# \"\" or [] leaves the action without a shortcut. Modifiers Ctrl, Alt, Shift, Super (Cmd on macOS) joined\n"
         "# with +, then a key: A-Z, 0-9, F1-F12, Left, Right, Up, Down, PageUp, PageDown, Home, End, Space, Tab,\n"

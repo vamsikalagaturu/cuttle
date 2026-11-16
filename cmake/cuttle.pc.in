@@ -2,7 +2,7 @@ prefix=${pcfiledir}/../..
 libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
 
-Name: pdf-tools
+Name: cuttle
 Description: @PROJECT_DESCRIPTION@ (the core library, pt_core.h)
 Version: @PROJECT_VERSION@
 Requires.private:@PT_PC_REQUIRES@

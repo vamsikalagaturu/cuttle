@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Downloads and builds the third-party libraries libpdf-tools.so links, for arm64-v8a with the NDK, from the
+# Downloads and builds the third-party libraries libcuttle.so links, for arm64-v8a with the NDK, from the
 # sources pinned in platform/versions.sh: MuPDF (with Tesseract) and OpenSSL, plus the raylib and raygui
 # sources (thirdparty/ in the repo; build.sh compiles raylib for Android) and Tesseract's English data. Everything
-# else goes under $PT_ANDROID_OUT (default ~/.cache/pdf-tools-native/android); what is already there is reused.
+# else goes under $PT_ANDROID_OUT (default ~/.cache/cuttle-native/android); what is already there is reused.
 # build.sh sources this file first and uses the paths it sets; run it alone (platform/android/deps.sh) to only build
 # the libraries, as CI does before caching them.
 set -euo pipefail
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 . "$HERE/../versions.sh"
-ROOT=${PT_ANDROID_OUT:-$HOME/.cache/pdf-tools-native/android}
+ROOT=${PT_ANDROID_OUT:-$HOME/.cache/cuttle-native/android}
 SDK=${ANDROID_HOME:-$HOME/Android/Sdk}
 NDK=${ANDROID_NDK:-$SDK/ndk/28.2.13676358}
 # Android 11: WindowInsets types and the NDK font matcher

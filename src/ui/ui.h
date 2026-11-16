@@ -6,7 +6,7 @@
 #include "raylib.h"
 #include <stdint.h>
 
-#define APP_ID "pdf-tools"
+#define APP_ID "cuttle"
 /* logical width below which toolbars collapse and the sidebar overlays the page (phones) */
 #define NARROW_W 760.0f
 /* logical window size below which the narrow toolbar and the compact Home page no longer fit */
@@ -84,7 +84,7 @@ typedef struct {
     float scale, w, h;  /* logical window size */
     float density;      /* framebuffer pixels per screen unit: 2 on a Retina Mac, else 1 */
     float scale_choice; /* interface size from the settings; 0 = automatic */
-    int scale_chosen;   /* the user changed the interface size in this run, which outranks PDF_TOOLS_SCALE */
+    int scale_chosen;   /* the user changed the interface size in this run, which outranks CUTTLE_SCALE */
     Vector2 mouse;
     int pressed, released, down, rpressed, rreleased, dclick, mpressed;
     float wheel, wheel_x;

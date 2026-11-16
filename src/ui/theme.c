@@ -16,63 +16,67 @@
 #define C_WHITE HEX(0xffffff)
 #define C_BLACK HEX(0x000000)
 
+/* Nord (nordtheme.com), as jackdaw and ferret: Polar Night surfaces and Snow Storm text when dark, the other way
+ * round when light, Frost for the accent and links, Aurora for danger, warning and success. The light accents are
+ * darkened until text on them stays above 4.5:1 (WCAG 2.2 SC 1.4.3), as in jackdaw. */
+
 /* drawn over pages and thumbnails, the same in both themes (the see-through black and white ones: theme_apply) */
 #define PAGE_COLOURS                                                                                                   \
-    .selection = HEX(0x1a73e8), .find_match = HEXA(0xffe100, 110), .find_current = HEXA(0xff8c00, 130),                \
-    .sync_mark = HEXA(0xffc800, 110), .field_bg = HEX(0xdce8ff), .field_mark = HEX(0x1e1e1e),                          \
-    .crop_dim = HEXA(0x202124, 150), .note_fill = HEX(0xffd54f), .note_line = HEX(0x8a6d00), .danger = HEX(0xd93025),  \
-    .warning = HEX(0xe6a000), .success = HEX(0x1e8e3e), .thumb_bg = HEX(0xebebeb), .thumb_frame = HEXA(0x808080, 120), \
-    .check_border = HEX(0x6e6e6e), .pad_guide = HEX(0xc8c8c8), .paper = C_WHITE, .shadow = C_BLACK, .scrim = C_BLACK,  \
-    .field_text = C_BLACK, .field_frame = HEX(0x505050), .on_danger = C_WHITE, .on_backdrop = C_WHITE,                 \
+    .selection = HEX(0x5e81ac), .find_match = HEXA(0xebcb8b, 120), .find_current = HEXA(0xd08770, 140),                \
+    .sync_mark = HEXA(0xebcb8b, 120), .field_bg = HEX(0xdbe5f1), .field_mark = HEX(0x2e3440),                          \
+    .crop_dim = HEXA(0x2e3440, 150), .note_fill = HEX(0xebcb8b), .note_line = HEX(0x8a6416), .danger = HEX(0xbf616a),  \
+    .warning = HEX(0xd08770), .success = HEX(0x4f7a3a), .thumb_bg = HEX(0xe5e9f0), .thumb_frame = HEXA(0x4c566a, 120), \
+    .check_border = HEX(0x4c566a), .pad_guide = HEX(0xd8dee9), .paper = C_WHITE, .shadow = C_BLACK, .scrim = C_BLACK,  \
+    .field_text = C_BLACK, .field_frame = HEX(0x4c566a), .on_danger = C_WHITE, .on_backdrop = HEX(0xeceff4),          \
     .present_bg = C_BLACK, .swatch_line = C_BLACK,                                                                     \
-    .source = {HEX(0x1a73e8), HEX(0xd93025), HEX(0x1e8e3e), HEX(0xf9ab00), HEX(0xa142f4), HEX(0x0096a0)}
+    .source = {HEX(0x5e81ac), HEX(0xbf616a), HEX(0xa3be8c), HEX(0xebcb8b), HEX(0xb48ead), HEX(0x88c0d0)}
 
 static const ui_palette LIGHT = {
-    .window = HEX(0xefefef),
-    .window_text = HEX(0x1a1a1a),
-    .base = C_WHITE,
-    .text = HEX(0x1a1a1a),
-    .button = HEX(0xe3e3e3),
-    .button_text = HEX(0x1a1a1a),
-    .mid = HEX(0xb8b8b8),
+    .window = HEX(0xe5e9f0),
+    .window_text = HEX(0x2e3440),
+    .base = HEX(0xeceff4),
+    .text = HEX(0x2e3440),
+    .button = HEX(0xd8dee9),
+    .button_text = HEX(0x2e3440),
+    .mid = HEX(0xc5cddb),
     .light = C_WHITE,
-    .dark = HEX(0x9f9f9f),
-    .highlight = HEX(0x308cc6),
+    .dark = HEX(0xa3adbf),
+    .highlight = HEX(0x5e81ac),
     .highlighted_text = C_WHITE,
-    .disabled_text = HEX(0x8c8c8c),
-    .placeholder = HEX(0x8c8c8c),
-    .link = HEX(0x0b57d0),
-    .tooltip = HEX(0xffffdc),
-    .page_bg = HEX(0x5f6368),
-    .border = HEX(0xc4c4c4),
-    .scroll_lane = HEX(0xe0e0e0),
-    .scroll_thumb = HEX(0xa0a0a0),
-    .scroll_thumb_hot = HEX(0x787878),
+    .disabled_text = HEX(0x7b8394),
+    .placeholder = HEX(0x5c6577),
+    .link = HEX(0x3b6a99),
+    .tooltip = HEX(0xeceff4),
+    .page_bg = HEX(0x4c566a),
+    .border = HEX(0xc5cddb),
+    .scroll_lane = HEX(0xe5e9f0),
+    .scroll_thumb = HEX(0xa3adbf),
+    .scroll_thumb_hot = HEX(0x7b8394),
     PAGE_COLOURS,
     .dark_mode = 0,
 };
 
 static const ui_palette DARK = {
-    .window = HEX(0x2b2b2b),
-    .window_text = HEX(0xe6e6e6),
-    .base = HEX(0x1f1f1f),
-    .text = HEX(0xe6e6e6),
-    .button = HEX(0x353535),
-    .button_text = HEX(0xe6e6e6),
-    .mid = HEX(0x2f2f2f),
-    .light = HEX(0x4a4a4a),
-    .dark = HEX(0x1a1a1a),
-    .highlight = HEX(0x2f6fd0),
+    .window = HEX(0x3b4252),
+    .window_text = HEX(0xd8dee9),
+    .base = HEX(0x2e3440),
+    .text = HEX(0xd8dee9),
+    .button = HEX(0x434c5e),
+    .button_text = HEX(0xeceff4),
+    .mid = HEX(0x3b4252),
+    .light = HEX(0x4c566a),
+    .dark = HEX(0x272c36),
+    .highlight = HEX(0x5e81ac),
     .highlighted_text = C_WHITE,
-    .disabled_text = HEX(0x7a7a7a),
-    .placeholder = HEX(0x8a8a8a),
-    .link = HEX(0x6ab0ff),
-    .tooltip = HEX(0x2b2b2b),
-    .page_bg = HEX(0x5f6368),
-    .border = HEX(0x4a4a4a),
-    .scroll_lane = HEX(0x262626),
-    .scroll_thumb = HEX(0x6e6e6e),
-    .scroll_thumb_hot = HEX(0x969696),
+    .disabled_text = HEX(0x6f7a8f),
+    .placeholder = HEX(0xa8b1c2),
+    .link = HEX(0x88c0d0),
+    .tooltip = HEX(0x3b4252),
+    .page_bg = HEX(0x272c36),
+    .border = HEX(0x4c566a),
+    .scroll_lane = HEX(0x2e3440),
+    .scroll_thumb = HEX(0x4c566a),
+    .scroll_thumb_hot = HEX(0x616e88),
     PAGE_COLOURS,
     .dark_mode = 1,
 };

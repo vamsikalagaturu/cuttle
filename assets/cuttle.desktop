@@ -1,11 +1,11 @@
 [Desktop Entry]
 Type=Application
-Name=PDF Tools
+Name=cuttle
 GenericName=PDF Editor
 Comment=View, redact, fill, add text, sign and merge PDFs
-Exec=pdf-tools %F
-Icon=pdf-tools
+Exec=cuttle %F
+Icon=cuttle
 Terminal=false
 Categories=Office;Viewer;
 MimeType=application/pdf;application/vnd.ms-xpsdocument;application/oxps;application/epub+zip;application/x-mobipocket-ebook;application/x-fictionbook+xml;application/vnd.comicbook+zip;application/x-cbt;image/svg+xml;image/png;image/jpeg;image/gif;image/bmp;image/tiff;image/jp2;image/jxr;image/vnd.adobe.photoshop;image/x-portable-anymap;
-StartupWMClass=pdf-tools
+StartupWMClass=cuttle

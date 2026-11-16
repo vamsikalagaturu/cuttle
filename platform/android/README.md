@@ -1,28 +1,28 @@
-# PDF Tools for Android (arm64-v8a, Android 11+)
+# cuttle for Android (arm64-v8a, Android 11+)
 
 The window (`src/ui`, raylib + raygui + MuPDF) packaged as a debug-signed APK, without Gradle.
 
 ```sh
-platform/android/build.sh        # -> ~/.cache/pdf-tools-native/android/out/pdf-tools.apk
-adb install -r ~/.cache/pdf-tools-native/android/out/pdf-tools.apk
+platform/android/build.sh        # -> ~/.cache/cuttle-native/android/out/cuttle.apk
+adb install -r ~/.cache/cuttle-native/android/out/cuttle.apk
 ```
 
 Requirements: Android SDK at `~/Android/Sdk` (`ANDROID_HOME` overrides) with build-tools 36.1.0, platform
 android-36.1 and NDK 28.2.13676358 (`ANDROID_NDK` overrides); JDK (`javac`, `keytool`), CMake, Ninja, GNU make,
-zip, curl. All output goes to `~/.cache/pdf-tools-native/android/` (`PT_ANDROID_OUT` overrides), including the
+zip, curl. All output goes to `~/.cache/cuttle-native/android/` (`PT_ANDROID_OUT` overrides), including the
 debug signing key; nothing is written into the repo. Re-runs are incremental.
 
 ## Release signing
 
 Release APKs (`.github/workflows/release.yml`) are all signed with one permanent key, so a new version installs
 over the old one. `build.sh` uses it when `PT_ANDROID_KEYSTORE` (the `.jks`) and `PT_ANDROID_KEYSTORE_PASSWORD`
-are set (key alias `pdf-tools`, key password = store password); otherwise it signs with the local debug key. The
+are set (key alias `cuttle`, key password = store password); otherwise it signs with the local debug key. The
 release job takes them from two repository secrets and fails without them. Create the key once, keep the `.jks`
 and its password safe (a lost key means users must uninstall to update), and store both as secrets:
 
 ```sh
-keytool -genkeypair -keystore ~/pdf-tools-release.jks -alias pdf-tools -keyalg RSA -keysize 4096 -validity 36500 -dname "CN=PDF Tools"
-base64 -w0 ~/pdf-tools-release.jks | gh secret set ANDROID_KEYSTORE_BASE64
+keytool -genkeypair -keystore ~/cuttle-release.jks -alias cuttle -keyalg RSA -keysize 4096 -validity 36500 -dname "CN=cuttle"
+base64 -w0 ~/cuttle-release.jks | gh secret set ANDROID_KEYSTORE_BASE64
 gh secret set ANDROID_KEYSTORE_PASSWORD      # prompts for the password
 ```
 
@@ -31,18 +31,18 @@ keytool asks for one password; with a PKCS12 keystore (keytool's default) the ke
 ## What build.sh does
 
 The versions and checksums are in `platform/versions.sh`. Steps 1-3 and the raylib/raygui sources are `deps.sh`,
-which `build.sh` runs first; `build.sh check` stops after compiling `libpdf-tools.so` in step 4.
+which `build.sh` runs first; `build.sh check` stops after compiling `libcuttle.so` in step 4.
 
 1. Downloads MuPDF's source and builds `libmupdf.a` and `libmupdf-third.a` (with Tesseract) with the NDK clang
    (API 30). A dummy `pkg-config` keeps host libraries out.
 2. Builds static OpenSSL (`libcrypto.a`) for arm64.
 3. Downloads Tesseract's English data (`eng.traineddata`), packed into the APK as an asset; `android_main.c` copies
-   it to `$XDG_DATA_HOME/pdf-tools/tessdata` on first start, where OCR finds it.
+   it to `$XDG_DATA_HOME/cuttle/tessdata` on first start, where OCR finds it.
 4. Configures `platform/android/CMakeLists.txt` with the NDK toolchain. It pulls in the root `CMakeLists.txt`
    (for `ptcore`, `ptcli` and `pt_embed`; programs and fontconfig off, the libraries above by path), builds
    raylib 6.2 from `thirdparty/raylib` for `PLATFORM_ANDROID` with `raylib_core.c` in place of `rcore.c`, and links
-   every `src/ui/*.c` (globbed, unmodified) plus the Android files below into `libpdf-tools.so`.
-5. Compiles `PdfToolsActivity.java` with `javac` and `d8`, links the manifest, the launcher icons in `res/`
+   every `src/ui/*.c` (globbed, unmodified) plus the Android files below into `libcuttle.so`.
+5. Compiles `CuttleActivity.java` with `javac` and `d8`, links the manifest, the launcher icons in `res/`
    (`assets/logo.svg` drawn at each density) and the assets with `aapt2` (minSdk 30, targetSdk 34,
    `--debug-mode`), adds `classes.dex` and the stripped `.so`, runs `zipalign -P 16` and signs with `apksigner`
    using a debug keystore created in the cache folder (or the release key, above).
@@ -59,7 +59,7 @@ would cover the window, and raylib cannot inset its framebuffer.
 | `raylib_core.c` | `#include "rcore.c"` plus `pt_raylib_follow_window()`, which needs raylib's static `CORE`/`platform`: raylib sizes its framebuffer once at window creation and has no public resize on Android. Each frame it sets the buffer geometry to follow the window (0x0, also after a surface rebind), and when the EGL surface size differs from `GetScreenWidth/Height` it updates display/screen/render/current-FBO size, clears the render offset and screen scale, and resets rlgl's framebuffer size, viewport and projection (`SetupViewport`). Scissor and touch scaling read those fields. After a config change, resize or new window, `android_main.c` keeps drawing for 1 s so the surface reaches the new size. If raylib is upgraded, check that the field names still match. |
 | `file_dialog_android.c` | `file_dialog`, `file_dialogs_poll`, `file_dialog_busy` and `move_to_trash` for Android: the system document picker, copies of `content://` documents and writing them back (see below). |
 | `android_glue.h` | Declarations shared by the files above, including `pt_java()`, which calls a `String` method of the activity. |
-| `java/.../PdfToolsActivity.java` | `NativeActivity` subclass: keeps intents delivered while running (`onNewIntent` -> `setIntent`), runs the picker (`startActivityForResult`, result polled by the native side), takes persistable URI permissions, copies documents in and out through `ContentResolver`. |
+| `java/.../CuttleActivity.java` | `NativeActivity` subclass: keeps intents delivered while running (`onNewIntent` -> `setIntent`), runs the picker (`startActivityForResult`, result polled by the native side), takes persistable URI permissions, copies documents in and out through `ContentResolver`. |
 | `AndroidManifest.xml` | Follows the device rotation (no `screenOrientation`); `configChanges` keeps the activity alive through rotation and resizes. `singleTask`, keyboard overlays the window (`adjustNothing`), VIEW filter for `application/pdf`. Permissions: `INTERNET` and `REQUEST_INSTALL_PACKAGES`, for updates only (see Storage access). |
 
 ### Substitutions in shared sources (keep in sync)
@@ -105,14 +105,14 @@ Cancel gives an empty list. Picked URIs keep their permission (`takePersistableU
 - **Recent files** list copies; they reopen from the copy, and a copy the system removed from the cache is
   fetched again from its document at start-up.
 - PDFs opened from a file manager, mail or browser (`ACTION_VIEW`) take the same path (a copy, written back).
-- Settings and signatures: `files/.config/pdf-tools/`. `files/external` links to the app's external folder,
+- Settings and signatures: `files/.config/cuttle/`. `files/external` links to the app's external folder,
   which a PC reaches over USB.
 
 ### Storage access
 
 The app has no storage permission. Every document comes through the system picker or another app's "Open with",
 works as a copy in the app's cache and is written back through its URI; `HOME` is `files/`. Its only permissions,
-`INTERNET` and `REQUEST_INSTALL_PACKAGES`, are for updates (src/core/update.c): `PdfToolsActivity.download` fetches
+`INTERNET` and `REQUEST_INSTALL_PACKAGES`, are for updates (src/core/update.c): `CuttleActivity.download` fetches
 the release check and the APK (into `cache/share/`), `installApk` hands that to the system installer through
 `ShareProvider`, first opening "Install unknown apps" when the app may not install packages yet.
 
@@ -124,12 +124,12 @@ place = right click (context menus). Where the UI marks a drag area (`ui_touch_d
 tool but View, the signature pad) one finger draws at once. Two fingers scroll and pinch-zoom the page around
 the point between them (`ui_add_pinch`). A mouse works too (right and middle buttons, wheel). Back (button or
 gesture) closes what is open, as Escape does: a dialog, menu, keyboard focus, popover, the find bar, the sidebar
-overlay, a selection (`tab_escape_pending`); with nothing open it asks "Close PDF Tools?", and closing still asks
+overlay, a selection (`tab_escape_pending`); with nothing open it asks "Close cuttle?", and closing still asks
 about unsaved edits.
 
 ## Platform services
 
-- Soft keyboard: `PdfToolsActivity.TextSink`, an invisible view with its own `InputConnection`, receives the
+- Soft keyboard: `CuttleActivity.TextSink`, an invisible view with its own `InputConnection`, receives the
   keyboard's text; composing text is typed into the field as it changes and replaced on commit (backspaces then
   the new text), so CJK, swipe and autocorrect input arrive. `native_text()` queues it for the window thread;
   widgets.c takes backspace (8) and delete (127) among the characters so the order holds.

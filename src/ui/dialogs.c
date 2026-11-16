@@ -1903,14 +1903,14 @@ void file_dialog(int mode, const char *title, const char *start, const char *fil
     int nowned = 0;
 #define OWN(s) (owned[nowned++] = (s))
 #ifdef __APPLE__
-    if (!getenv("PDF_TOOLS_BUILTIN_CHOOSER")) {
+    if (!getenv("CUTTLE_BUILTIN_CHOOSER")) {
         argv[n++] = "osascript";
         argv[n++] = "-e";
         argv[n++] = OWN(mac_chooser_script(mode, title, start, patterns));
         (void)filter_name;
     }
 #else
-    if (!getenv("PDF_TOOLS_BUILTIN_CHOOSER") && on_path("zenity")) {
+    if (!getenv("CUTTLE_BUILTIN_CHOOSER") && on_path("zenity")) {
         argv[n++] = "zenity";
         argv[n++] = "--file-selection";
         argv[n++] = OWN(pt_format("--title=%s", title));
@@ -1924,7 +1924,7 @@ void file_dialog(int mode, const char *title, const char *start, const char *fil
             argv[n++] = OWN(pt_format("--file-filter=%s | %s", filter_name ? filter_name : "Files", patterns));
             argv[n++] = "--file-filter=All files | *";
         }
-    } else if (!getenv("PDF_TOOLS_BUILTIN_CHOOSER") && on_path("kdialog")) {
+    } else if (!getenv("CUTTLE_BUILTIN_CHOOSER") && on_path("kdialog")) {
         argv[n++] = "kdialog";
         argv[n++] = "--title";
         argv[n++] = (char *)title;

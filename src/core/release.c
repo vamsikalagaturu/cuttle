@@ -105,13 +105,13 @@ void pt_release_free(pt_release *r)
 char *pt_update_asset(pt_install_kind kind, const char *arch)
 {
     switch (kind) {
-    case PT_INSTALL_APPIMAGE: return pt_format("PDF_Tools-%s.AppImage", arch);
+    case PT_INSTALL_APPIMAGE: return pt_format("cuttle-%s.AppImage", arch);
     case PT_INSTALL_TARBALL:
-    case PT_INSTALL_PREFIX: return pt_format("PDF-Tools-Linux-%s.tar.gz", arch);
-    case PT_INSTALL_WINDOWS: return pt_strdup("PDF-Tools-Windows.zip");
+    case PT_INSTALL_PREFIX: return pt_format("cuttle-linux-%s.tar.gz", arch);
+    case PT_INSTALL_WINDOWS: return pt_strdup("cuttle-windows.zip");
     /* releases build the .dmg on Apple Silicon only */
-    case PT_INSTALL_MACOS: return strcmp(arch, "aarch64") ? NULL : pt_strdup("PDF-Tools.dmg");
-    case PT_INSTALL_ANDROID: return pt_strdup("pdf-tools.apk");
+    case PT_INSTALL_MACOS: return strcmp(arch, "aarch64") ? NULL : pt_strdup("cuttle.dmg");
+    case PT_INSTALL_ANDROID: return pt_strdup("cuttle.apk");
     case PT_INSTALL_NONE: break;
     }
     return NULL;
@@ -195,21 +195,21 @@ const char *pt_prefix_blocked(const char *prefix, const pt_strs *files)
 
 char *pt_updatable_prefix(const char *exe)
 {
-    /* what CMakeLists.txt's install() rules of the app component put into the prefix, besides share/pdf-tools */
+    /* what CMakeLists.txt's install() rules of the app component put into the prefix, besides share/cuttle */
     static const char *const FILES[] = {
-        "bin/pdf-tools", "share/man/man1/pdf-tools.1", "share/applications/pdf-tools.desktop",
-        "share/icons/hicolor/scalable/apps/pdf-tools.svg", "share/pdf-tools/tessdata/eng.traineddata"};
+        "bin/cuttle", "share/man/man1/cuttle.1", "share/applications/cuttle.desktop",
+        "share/icons/hicolor/scalable/apps/cuttle.svg", "share/cuttle/tessdata/eng.traineddata"};
     char *real = pt_realpath(exe), *bin = pt_dirname(real), *prefix = pt_dirname(bin);
-    char *own = pt_join(prefix, "share/pdf-tools");
+    char *own = pt_join(prefix, "share/cuttle");
     struct stat st;
     /* /usr belongs to the distribution's package manager (Filesystem Hierarchy Standard 3.0, 4.1) */
-    int ok = !strcmp(pt_basename(real), "pdf-tools") && !strcmp(pt_basename(bin), "bin") && !stat(own, &st) &&
+    int ok = !strcmp(pt_basename(real), "cuttle") && !strcmp(pt_basename(bin), "bin") && !stat(own, &st) &&
              S_ISDIR(st.st_mode) && strcmp(prefix, "/usr") && writable_dir(prefix);
     if (ok) {
         pt_strs files = {0}, old = {0};
         for (size_t i = 0; i < sizeof FILES / sizeof *FILES; i++) pt_push(files, pt_strdup(FILES[i]));
         ok = !pt_tree_files(own, &old);
-        for (int i = 0; i < old.n; i++) pt_push(files, pt_format("share/pdf-tools/%s", old.v[i]));
+        for (int i = 0; i < old.n; i++) pt_push(files, pt_format("share/cuttle/%s", old.v[i]));
         ok = ok && !pt_prefix_blocked(prefix, &files);
         pt_strs_free(&files);
         pt_strs_free(&old);

@@ -1,4 +1,4 @@
-package io.github.vamsikalagaturu.pdftools;
+package io.github.vamsikalagaturu.cuttle;
 
 import android.app.NativeActivity;
 import android.content.ClipData;
@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
  * insets, and downloading and installing updates. Called from the native thread (android_main.c,
  * file_dialog_android.c, printing.c) and update.c's worker thread (download); every public method takes and returns
  * strings, null meaning "no" or "nothing". */
-public class PdfToolsActivity extends NativeActivity {
+public class CuttleActivity extends NativeActivity {
     private static final int REQ_PICK = 1;
     private final Object lock = new Object();
     private String pickResult;        /* null while pending, "" when cancelled, else URIs separated by '\n' */
@@ -121,7 +121,7 @@ public class PdfToolsActivity extends NativeActivity {
      * text field as it goes and replaced (backspaces, then the new text) when it changes or is committed. */
     private final class TextSink extends View {
         TextSink() {
-            super(PdfToolsActivity.this);
+            super(CuttleActivity.this);
             setFocusable(true);
             setFocusableInTouchMode(true);
         }
@@ -199,7 +199,7 @@ public class PdfToolsActivity extends NativeActivity {
     public String setClipboard(String text) {
         return onUi(() -> {
             ClipboardManager cm = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-            cm.setPrimaryClip(ClipData.newPlainText("PDF Tools", text));
+            cm.setPrimaryClip(ClipData.newPlainText("cuttle", text));
             return "1";
         });
     }

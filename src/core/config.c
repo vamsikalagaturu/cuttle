@@ -3,11 +3,13 @@
 #include "pt_core.h"
 #include <ctype.h>
 #include <dirent.h>
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
-#define APP_DIR "pdf-tools"
+#define APP_DIR "cuttle"
 #define LEGACY_DIR "pdf-redact"
 
 /* ---- the known settings ---- */
@@ -35,8 +37,8 @@ const pt_setting_def pt_settings_defs[] = {
     {"recent_files", PT_SET_LIST, NULL, 0, "Recently opened PDFs, newest first"},
     {"starred_files", PT_SET_LIST, NULL, 0, "Starred files, newest first, listed first on the Home tab"},
     {"favourite_colours", PT_SET_LIST, NULL, 0, "Favourite colours (#rrggbb), offered wherever a colour is picked"},
-    {"accent_colour_dark", PT_SET_STR, "", 0, "Accent colour (#rrggbb) of the dark theme; empty: the default blue"},
-    {"accent_colour_light", PT_SET_STR, "", 0, "Accent colour (#rrggbb) of the light theme; empty: the default blue"},
+    {"accent_colour_dark", PT_SET_STR, "", 0, "Accent colour (#rrggbb) of the dark theme; empty: Nord blue"},
+    {"accent_colour_light", PT_SET_STR, "", 0, "Accent colour (#rrggbb) of the light theme; empty: Nord blue"},
     {"ocr_language", PT_SET_STR, "eng", 0, "Tesseract language(s) for text recognition, e.g. eng or deu+eng"},
     {"signing_certificate", PT_SET_STR, "", 0,
      "The .p12/.pfx certificate used last to sign (its password is never stored)"},
@@ -502,7 +504,7 @@ int pt_settings_save(const pt_settings *s)
 {
     if (s->keep_file) return -1;
     toml_text b = {0};
-    put(&b, "# PDF Tools settings. Edit while the app is closed; unknown keys and wrong types are ignored.\n\n");
+    put(&b, "# cuttle settings. Edit while the app is closed; unknown keys and wrong types are ignored.\n\n");
     for (int i = 0; i < pt_settings_count; i++) {
         const pt_setting_def *d = &pt_settings_defs[i];
         pt_setting_value def = {0};
@@ -547,8 +549,25 @@ static void copy_tree(const char *from, const char *to)
     closedir(d);
 }
 
+/* parent/old to parent/new, once: only while the new folder does not exist yet */
+static void move_app_dir(const char *parent, const char *old_name, const char *new_name)
+{
+    char *old = pt_join(parent, old_name), *new_ = pt_join(parent, new_name);
+    struct stat st;
+    if (!stat(old, &st) && S_ISDIR(st.st_mode) && !pt_exists(new_) && rename(old, new_))
+        pt_log(PT_LOG_WARN, "could not move %s to %s: %s", old, new_, strerror(errno));
+    free(old);
+    free(new_);
+}
+
 void pt_migrate_legacy(void)
 {
+    /* the app was called pdf-tools until 0.6: its settings, signatures, positions and bookmarks move over */
+    char *config = pt_config_dir(), *config_parent = pt_dirname(config), *data = pt_data_dir();
+    move_app_dir(config_parent, "pdf-tools", APP_DIR);
+    move_app_dir(data, "pdf-tools", APP_DIR);
+    free(config), free(config_parent), free(data);
+
     char *dir = pt_config_dir(), *parent = pt_dirname(dir);
     char *legacy = pt_join(parent, LEGACY_DIR);
     char *old = pt_join(legacy, "signatures"), *new_ = pt_join(dir, "signatures");

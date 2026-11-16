@@ -30,11 +30,11 @@ jobs:
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-linux/dl
-            ${{ runner.temp }}/pdf-tools-linux/src
-            ${{ runner.temp }}/pdf-tools-linux/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-linux/openssl-install-*
-            ${{ runner.temp }}/pdf-tools-linux/raylib-install-*
+            ${{ runner.temp }}/cuttle-linux/dl
+            ${{ runner.temp }}/cuttle-linux/src
+            ${{ runner.temp }}/cuttle-linux/mupdf-build-*
+            ${{ runner.temp }}/cuttle-linux/openssl-install-*
+            ${{ runner.temp }}/cuttle-linux/raylib-install-*
       - name: Compilers, pkg-config, fontconfig, raylib's X11/Wayland/GL headers
         # without man-db's index rebuild, which can hang the install for many minutes on these runners
         timeout-minutes: 10
@@ -45,12 +45,12 @@ jobs:
             libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev libegl-dev libxkbcommon-dev libwayland-dev \
             wayland-protocols
       - name: Build, test and pack the AppImage and tarball (platform/linux/build.sh)
-        run: PT_LINUX_OUT="$RUNNER_TEMP/pdf-tools-linux" platform/linux/build.sh
+        run: PT_LINUX_OUT="$RUNNER_TEMP/cuttle-linux" platform/linux/build.sh
       - name: Attach them to the release
         run: |
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
-            "$RUNNER_TEMP/pdf-tools-linux/out/PDF_Tools-x86_64.AppImage" \
-            "$RUNNER_TEMP/pdf-tools-linux/out/PDF-Tools-Linux-x86_64.tar.gz"
+            "$RUNNER_TEMP/cuttle-linux/out/cuttle-x86_64.AppImage" \
+            "$RUNNER_TEMP/cuttle-linux/out/cuttle-linux-x86_64.tar.gz"
   android:
     runs-on: ubuntu-latest
     env:
@@ -70,7 +70,7 @@ jobs:
             echo "::error::secrets ANDROID_KEYSTORE_BASE64 and ANDROID_KEYSTORE_PASSWORD are not set (platform/android/README.md)"
             exit 1
           fi
-          printf '%s' "$KEYSTORE_BASE64" | base64 -d >"$RUNNER_TEMP/pdf-tools-release.jks"
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d >"$RUNNER_TEMP/cuttle-release.jks"
       - name: Ninja, Android build-tools, platform and NDK
         timeout-minutes: 15
         run: |
@@ -88,21 +88,21 @@ jobs:
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-android/dl
-            ${{ runner.temp }}/pdf-tools-android/src
-            ${{ runner.temp }}/pdf-tools-android/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-android/openssl-install-*
+            ${{ runner.temp }}/cuttle-android/dl
+            ${{ runner.temp }}/cuttle-android/src
+            ${{ runner.temp }}/cuttle-android/mupdf-build-*
+            ${{ runner.temp }}/cuttle-android/openssl-install-*
       - name: Build the APK (platform/android/build.sh)
         env:
-          PT_ANDROID_KEYSTORE: ${{ runner.temp }}/pdf-tools-release.jks
+          PT_ANDROID_KEYSTORE: ${{ runner.temp }}/cuttle-release.jks
           PT_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          PT_ANDROID_OUT="$RUNNER_TEMP/pdf-tools-android" ANDROID_NDK="$ANDROID_HOME/ndk/$NDK_VERSION" \
+          PT_ANDROID_OUT="$RUNNER_TEMP/cuttle-android" ANDROID_NDK="$ANDROID_HOME/ndk/$NDK_VERSION" \
             platform/android/build.sh
       - name: Attach it to the release
         run: |
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
-            "$RUNNER_TEMP/pdf-tools-android/out/pdf-tools.apk"
+            "$RUNNER_TEMP/cuttle-android/out/cuttle.apk"
   macos:
     runs-on: macos-latest
     steps:
@@ -119,17 +119,17 @@ jobs:
         with:
           key: ${{ steps.key.outputs.key }}
           path: |
-            ${{ runner.temp }}/pdf-tools-macos/dl
-            ${{ runner.temp }}/pdf-tools-macos/src
-            ${{ runner.temp }}/pdf-tools-macos/mupdf-build-*
-            ${{ runner.temp }}/pdf-tools-macos/openssl-install-*
-            ${{ runner.temp }}/pdf-tools-macos/raylib-install-*
-      - name: Build, test and pack PDF Tools.app and PDF-Tools.dmg (platform/macos/build.sh)
-        run: PT_MACOS_OUT="$RUNNER_TEMP/pdf-tools-macos" platform/macos/build.sh
+            ${{ runner.temp }}/cuttle-macos/dl
+            ${{ runner.temp }}/cuttle-macos/src
+            ${{ runner.temp }}/cuttle-macos/mupdf-build-*
+            ${{ runner.temp }}/cuttle-macos/openssl-install-*
+            ${{ runner.temp }}/cuttle-macos/raylib-install-*
+      - name: Build, test and pack cuttle.app and cuttle.dmg (platform/macos/build.sh)
+        run: PT_MACOS_OUT="$RUNNER_TEMP/cuttle-macos" platform/macos/build.sh
       - name: Attach it to the release
         run: |
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
-            "$RUNNER_TEMP/pdf-tools-macos/out/PDF-Tools.dmg"
+            "$RUNNER_TEMP/cuttle-macos/out/cuttle.dmg"
   windows:
     runs-on: windows-latest
     defaults:
@@ -154,13 +154,13 @@ jobs:
           key: ${{ steps.key.outputs.key }}
           # MuPDF builds inside its source tree (src/mupdf-<fonts>), so src holds its build too
           path: |
-            ${{ runner.temp }}/pdf-tools-windows/dl
-            ${{ runner.temp }}/pdf-tools-windows/src
-            ${{ runner.temp }}/pdf-tools-windows/openssl-install
-            ${{ runner.temp }}/pdf-tools-windows/raylib-install
-      - name: Build, test and pack PDF-Tools-Windows.zip (platform/windows/build.sh, MSVC)
-        run: PT_WINDOWS_OUT="$(cygpath -u "$RUNNER_TEMP")/pdf-tools-windows" platform/windows/build.sh
+            ${{ runner.temp }}/cuttle-windows/dl
+            ${{ runner.temp }}/cuttle-windows/src
+            ${{ runner.temp }}/cuttle-windows/openssl-install
+            ${{ runner.temp }}/cuttle-windows/raylib-install
+      - name: Build, test and pack cuttle-windows.zip (platform/windows/build.sh, MSVC)
+        run: PT_WINDOWS_OUT="$(cygpath -u "$RUNNER_TEMP")/cuttle-windows" platform/windows/build.sh
       - name: Attach it to the release
         run: |
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
-            "$(cygpath -w "$RUNNER_TEMP")\\pdf-tools-windows\\out\\PDF-Tools-Windows.zip"
+            "$(cygpath -w "$RUNNER_TEMP")\\cuttle-windows\\out\\cuttle-windows.zip"

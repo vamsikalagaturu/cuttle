@@ -1,6 +1,6 @@
 #ifndef PT_CORE_H
 #define PT_CORE_H
-/* The PDF Tools core: the edit model, the save pipeline and every PDF operation; no window code here.
+/* The cuttle core: the edit model, the save pipeline and every PDF operation; no window code here.
  * Pages are 0-based, positions are PDF points in MuPDF page space (top-left origin, as displayed).
  * Calls that take an fz_context throw MuPDF errors; run them inside fz_try. A returned char * is malloc'd and the
  * caller frees it unless noted; MuPDF objects follow MuPDF's keep/drop rules; the vectors filled are appended to.
@@ -36,7 +36,7 @@ typedef enum { PT_LOG_DEBUG, PT_LOG_INFO, PT_LOG_WARN, PT_LOG_ERROR } pt_log_lev
 typedef void (*pt_log_sink)(pt_log_level level, const char *message);
 void pt_log(pt_log_level level, const char *fmt, ...) __attribute__((format(printf, 2, 3)));
 void pt_log_set_sink(pt_log_sink sink); /* NULL: stderr */
-pt_log_level pt_log_threshold(void);    /* from PDF_TOOLS_LOG; default warn */
+pt_log_level pt_log_threshold(void);    /* from CUTTLE_LOG; default warn */
 void pt_log_mupdf(fz_context *ctx);     /* MuPDF's warnings and errors through pt_log */
 
 /* ---- util.c: byte buffers and files ---- */
@@ -828,7 +828,7 @@ typedef struct {
     int keep_file; /* the file has lines the reader skipped: it is never rewritten, so no hand edit is lost */
 } pt_settings;
 
-char *pt_config_dir(void); /* $XDG_CONFIG_HOME, else %APPDATA% on Windows, else ~/.config; plus /pdf-tools */
+char *pt_config_dir(void); /* $XDG_CONFIG_HOME, else %APPDATA% on Windows, else ~/.config; plus /cuttle */
 /* path NULL: settings.toml in pt_config_dir(); a missing file is written with the defaults; a line it cannot read
  * sets keep_file */
 void pt_settings_load(pt_settings *s, const char *path);
@@ -958,8 +958,8 @@ extern const int pt_asset_logo_svg_size;
 extern const unsigned char pt_asset_desktop[];
 extern const int pt_asset_desktop_size;
 
-#define APP_NAME "PDF Tools"
-#define REPO_URL "https://github.com/vamsikalagaturu/pdf-tools"
+#define APP_NAME "cuttle"
+#define REPO_URL "https://github.com/vamsikalagaturu/cuttle"
 
 /* ---- release.c: what an update check reads from a GitHub release (no network here) ---- */
 /* <0, 0 or >0 as a is older than, the same as or newer than b: dot-separated numbers, a leading v ignored, a
@@ -981,11 +981,11 @@ void pt_release_free(pt_release *r);
 
 typedef enum {
     PT_INSTALL_NONE,     /* nothing the app can replace itself (a distro package, a prefix the user cannot write) */
-    PT_INSTALL_APPIMAGE, /* Linux, PDF_Tools-<arch>.AppImage */
-    PT_INSTALL_TARBALL,  /* Linux, the pdf-tools/ folder of PDF-Tools-Linux-<arch>.tar.gz */
-    PT_INSTALL_WINDOWS,  /* the PDF-Tools folder of PDF-Tools-Windows.zip */
-    PT_INSTALL_MACOS,    /* PDF Tools.app from PDF-Tools.dmg */
-    PT_INSTALL_ANDROID,  /* pdf-tools.apk */
+    PT_INSTALL_APPIMAGE, /* Linux, cuttle-<arch>.AppImage */
+    PT_INSTALL_TARBALL,  /* Linux, the cuttle/ folder of cuttle-linux-<arch>.tar.gz */
+    PT_INSTALL_WINDOWS,  /* the cuttle folder of cuttle-windows.zip */
+    PT_INSTALL_MACOS,    /* cuttle.app from cuttle.dmg */
+    PT_INSTALL_ANDROID,  /* cuttle.apk */
     PT_INSTALL_PREFIX    /* Linux, `build.sh install PREFIX`: the tarball's files, one by one over PREFIX's */
 } pt_install_kind;
 
@@ -1039,7 +1039,7 @@ int pt_update_windows_swap(pt_update *u, int restart);
 #endif
 
 #ifndef _WIN32
-/* PT_INSTALL_PREFIX: PREFIX (malloc'd) when `exe` is PREFIX/bin/pdf-tools beside a PREFIX/share/pdf-tools folder,
+/* PT_INSTALL_PREFIX: PREFIX (malloc'd) when `exe` is PREFIX/bin/cuttle beside a PREFIX/share/cuttle folder,
  * PREFIX is not /usr and the user may write PREFIX and every file an update there replaces or adds; else NULL */
 char *pt_updatable_prefix(const char *exe);
 /* Appends the paths of the files under `root`, relative to it and sorted. 0, or -1 when it cannot be read or holds

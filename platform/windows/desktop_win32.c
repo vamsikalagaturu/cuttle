@@ -1,4 +1,4 @@
-/* `pdf-tools --install-desktop` on Windows: PDF Tools in the "Open with" list of PDF files and of the other formats
+/* `cuttle --install-desktop` on Windows: cuttle in the "Open with" list of PDF files and of the other formats
  * it opens (pt_doc_formats), as a file type of the current user (HKEY_CURRENT_USER\Software\Classes; no administrator
  * rights). Windows lets only the user choose the default program, so this adds the choice without taking over .pdf. */
 #define WIN32_LEAN_AND_MEAN
@@ -8,12 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define PROG_ID L"PDFTools.Document"
+#define PROG_ID L"Cuttle.Document"
 #define CLASSES L"Software\\Classes\\"
 
 void pt_desktop_targets(char **entry, char **icon)
 {
-    *entry = pt_strdup("HKEY_CURRENT_USER\\Software\\Classes\\PDFTools.Document");
+    *entry = pt_strdup("HKEY_CURRENT_USER\\Software\\Classes\\Cuttle.Document");
     *icon = pt_strdup("HKEY_CURRENT_USER\\Software\\Classes\\.pdf\\OpenWithProgids");
 }
 

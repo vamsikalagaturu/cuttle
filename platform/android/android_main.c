@@ -22,7 +22,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOG(...) __android_log_print(ANDROID_LOG_INFO, "pdf-tools", __VA_ARGS__)
+#define LOG(...) __android_log_print(ANDROID_LOG_INFO, "cuttle", __VA_ARGS__)
 
 #define GLFW_RELEASE 0
 #define GLFW_PRESS 1
@@ -124,10 +124,10 @@ const char *pt_android_get_clipboard(void)
 
 /* ---- environment ---- */
 
-/* Tesseract reads its language data from a file: the APK's copy goes to $XDG_DATA_HOME/pdf-tools/tessdata once. */
+/* Tesseract reads its language data from a file: the APK's copy goes to $XDG_DATA_HOME/cuttle/tessdata once. */
 static void copy_tessdata(ANativeActivity *act, const char *data)
 {
-    char *dir = pt_format("%s/pdf-tools/tessdata", data), *path = pt_format("%s/eng.traineddata", dir);
+    char *dir = pt_format("%s/cuttle/tessdata", data), *path = pt_format("%s/eng.traineddata", dir);
     AAsset *asset = pt_exists(path)
                         ? NULL
                         : AAssetManager_open(act->assetManager, "tessdata/eng.traineddata", AASSET_MODE_STREAMING);
@@ -190,7 +190,7 @@ static void setup_environment(void)
 
 static jobject last_intent;
 
-/* PdfToolsActivity.onNewIntent() calls setIntent(), so a changed getIntent() is a new document. */
+/* CuttleActivity.onNewIntent() calls setIntent(), so a changed getIntent() is a new document. */
 static void check_intent(void)
 {
     JNIEnv *e = jni();
@@ -222,7 +222,7 @@ static void check_intent(void)
 
 static int32_t (*raylib_input)(struct android_app *, AInputEvent *);
 static int chars[256], nchars;
-/* text from the soft keyboard (PdfToolsActivity.TextSink, on the UI thread): code points, IME_BACKSPACE,
+/* text from the soft keyboard (CuttleActivity.TextSink, on the UI thread): code points, IME_BACKSPACE,
  * IME_DELETE, IME_ENTER */
 #define IME_BACKSPACE -1
 #define IME_ENTER -2
@@ -698,7 +698,7 @@ void pt_android_frame(void)
         tab *t = app_current_doc();
         if (dialogs_open() || menu_is_open() || ui.focus || app_reading() || (t && tab_escape_pending(t)))
             send_key(KEY_ESCAPE, 0);
-        else question_box("Close PDF Tools", "Close PDF Tools?", "Close", "Cancel", close_answered, NULL);
+        else question_box("Close cuttle", "Close cuttle?", "Close", "Cancel", close_answered, NULL);
     }
     int want = ui.focus != NULL;
     if (want != keyboard) {
@@ -747,7 +747,7 @@ int main(int argc, char **argv)
     (void)argc, (void)argv;
     struct android_app *a = GetAndroidApp();
     setup_environment();
-    char arg0[] = "pdf-tools";
+    char arg0[] = "cuttle";
     pt_app_main(1, (char *[]){arg0, NULL});
     /* The process must not outlive the window: the shared sources keep state in statics that a relaunch in the
      * same process would inherit (app.quit among them). */

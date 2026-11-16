@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Builds pdf-tools for Linux and packs it as an AppImage and as PDF-Tools-Linux-<arch>.tar.gz (a pdf-tools/
+# Builds cuttle for Linux and packs it as an AppImage and as cuttle-linux-<arch>.tar.gz (a cuttle/
 # folder with bin/ and share/), for this machine's architecture (x86_64 or aarch64). Both run on systems with this
 # machine's glibc or newer, so release builds come from the oldest supported one (CI: ubuntu-24.04).
 # The libraries come from deps.sh (MuPDF with Tesseract, OpenSSL and raylib with both Wayland and X11, built
 # from the sources pinned in platform/versions.sh) and are linked statically; CMake finds them through pkg-config.
 # fontconfig, OpenGL and the window system's libraries come from the system at run time.
 # Needs a C/C++ compiler, make, CMake, pkg-config, curl, git and the X11/Wayland development headers.
-# Output: $PT_LINUX_OUT/out (default ~/.cache/pdf-tools/linux). Re-runs are incremental.
+# Output: $PT_LINUX_OUT/out (default ~/.cache/cuttle/linux). Re-runs are incremental.
 # MuPDF's CJK and Noto fallback fonts are left out (fonts a PDF does not embed come from fontconfig);
 # PT_FONTS=full bundles them.
 # `build.sh check` builds and runs the tests without packing; `build.sh install PREFIX` installs the program with
@@ -24,7 +24,7 @@ esac
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 . "$HERE/deps.sh"
 
-step "PDF Tools"
+step "cuttle"
 # what was built here comes first; fontconfig from the system after it
 export PKG_CONFIG_PATH="$ROOT/pkgconfig:$OPENSSL_OUT/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
 cmake --fresh -S "$REPO" -B "$ROOT/build" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$RAYLIB_OUT" \
@@ -42,7 +42,7 @@ install)
     ;;
 esac
 
-step "PDF_Tools-$ARCH.AppImage"
+step "cuttle-$ARCH.AppImage"
 case "$ARCH" in
 x86_64) APPIMAGETOOL_SHA256=$APPIMAGETOOL_SHA256_x86_64 ;;
 aarch64) APPIMAGETOOL_SHA256=$APPIMAGETOOL_SHA256_aarch64 ;;
@@ -51,22 +51,22 @@ mkdir -p "$ROOT/out"
 APPDIR=$ROOT/AppDir
 rm -rf "$APPDIR"
 DESTDIR=$APPDIR cmake --install "$ROOT/build" --prefix /usr --component app --strip >/dev/null
-cp "$REPO/assets/pdf-tools.desktop" "$APPDIR/pdf-tools.desktop"
-cp "$REPO/assets/logo.svg" "$APPDIR/pdf-tools.svg"
-ln -s usr/bin/pdf-tools "$APPDIR/AppRun"
+cp "$REPO/assets/cuttle.desktop" "$APPDIR/cuttle.desktop"
+cp "$REPO/assets/logo.svg" "$APPDIR/cuttle.svg"
+ln -s usr/bin/cuttle "$APPDIR/AppRun"
 fetch "$APPIMAGETOOL_URL/appimagetool-$ARCH.AppImage" "$ROOT/dl/appimagetool.AppImage" "$APPIMAGETOOL_SHA256"
 chmod +x "$ROOT/dl/appimagetool.AppImage"
 # extract-and-run: no FUSE needed (containers, CI)
 APPIMAGE_EXTRACT_AND_RUN=1 ARCH=$ARCH "$ROOT/dl/appimagetool.AppImage" --no-appstream "$APPDIR" \
-    "$ROOT/out/PDF_Tools-$ARCH.AppImage" >"$ROOT/appimage.log" 2>&1 || { tail -20 "$ROOT/appimage.log" >&2; exit 1; }
-ls -l "$ROOT/out/PDF_Tools-$ARCH.AppImage"
+    "$ROOT/out/cuttle-$ARCH.AppImage" >"$ROOT/appimage.log" 2>&1 || { tail -20 "$ROOT/appimage.log" >&2; exit 1; }
+ls -l "$ROOT/out/cuttle-$ARCH.AppImage"
 
 # the same files as one folder, runnable wherever it is unpacked: the program finds its OCR data in
-# bin/../share/pdf-tools
-TARBALL=PDF-Tools-Linux-$ARCH.tar.gz
+# bin/../share/cuttle
+TARBALL=cuttle-linux-$ARCH.tar.gz
 step "$TARBALL"
 STAGE=$ROOT/stage
 rm -rf "$STAGE"
-cmake --install "$ROOT/build" --prefix "$STAGE/pdf-tools" --component app --strip >/dev/null
-tar czf "$ROOT/out/$TARBALL" -C "$STAGE" --owner=0 --group=0 pdf-tools
+cmake --install "$ROOT/build" --prefix "$STAGE/cuttle" --component app --strip >/dev/null
+tar czf "$ROOT/out/$TARBALL" -C "$STAGE" --owner=0 --group=0 cuttle
 ls -l "$ROOT/out/$TARBALL"

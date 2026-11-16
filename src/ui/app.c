@@ -1186,7 +1186,7 @@ static const char *exe_path(const char *argv0)
 
 static char *session_file(void)
 {
-    char *base = pt_data_dir(), *path = pt_format("%s/pdf-tools/session.txt", base);
+    char *base = pt_data_dir(), *path = pt_format("%s/cuttle/session.txt", base);
     free(base);
     return path;
 }
@@ -1323,7 +1323,7 @@ int pt_app_main(int argc, char **argv)
         /* the manual in a terminal; piped (scripts, agents) or without man, the short usage */
 #ifndef _WIN32
         if (isatty(1) && !access("/usr/bin/man", X_OK)) {
-            char tmp[] = "/tmp/pdf-tools-man-XXXXXX";
+            char tmp[] = "/tmp/cuttle-man-XXXXXX";
             int fd = mkstemp(tmp);
             if (fd >= 0 && write(fd, pt_asset_man, (size_t)pt_asset_man_size) == pt_asset_man_size) {
                 close(fd);

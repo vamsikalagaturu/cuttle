@@ -1,5 +1,5 @@
 /* Updates in the window. At startup (setting check_updates; at most once a day, remembered in
- * pt_data_dir()/pdf-tools/update-check) a background thread asks for the latest release. When it is newer, a bar under
+ * pt_data_dir()/cuttle/update-check) a background thread asks for the latest release. When it is newer, a bar under
  * the tab strip offers Update, which runs on such a thread too; the work itself is pt_update_*. Installs the app cannot
  * replace (a distro package, a prefix the user may not write) get the release page instead. The main loop is woken once
  * when a job ends and draws nothing while one runs, except the bar's progress during a download. */
@@ -84,7 +84,7 @@ static int start_job(job *j)
 
 static char *state_file(void)
 {
-    char *base = pt_data_dir(), *path = pt_format("%s/pdf-tools/update-check", base);
+    char *base = pt_data_dir(), *path = pt_format("%s/cuttle/update-check", base);
     free(base);
     return path;
 }
@@ -197,9 +197,9 @@ static void installed(job *j)
         return;
     }
 #ifdef __ANDROID__
-    char *r = pt_java("installApk", 1, "pdf-tools.apk");
+    char *r = pt_java("installApk", 1, "cuttle.apk");
     if (!r) offer_page("The system installer could not be opened.");
-    else if (!strcmp(r, "settings")) status("Allow PDF Tools to install apps; the installer opens after that", 10);
+    else if (!strcmp(r, "settings")) status("Allow cuttle to install apps; the installer opens after that", 10);
     free(r);
 #else
     bar_hidden = 1;
@@ -219,11 +219,11 @@ static void installed(job *j)
 
 void update_start(void)
 {
-    const char *url = getenv("PDF_TOOLS_UPDATE_URL");
+    const char *url = getenv("CUTTLE_UPDATE_URL");
 #ifdef __ANDROID__
-    /* apps get no environment of their own: `adb shell setprop debug.pdftools.update_url URL` */
+    /* apps get no environment of their own: `adb shell setprop debug.cuttle.update_url URL` */
     static char prop[PROP_VALUE_MAX];
-    if ((!url || !*url) && __system_property_get("debug.pdftools.update_url", prop) > 0) url = prop;
+    if ((!url || !*url) && __system_property_get("debug.cuttle.update_url", prop) > 0) url = prop;
 #endif
     pt_update_use_url(url);
     if (!pt_settings_int(&app.settings, "check_updates")) return;

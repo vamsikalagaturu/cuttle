@@ -326,15 +326,15 @@ int ui_input_since_frame(void)
 
 /* ---- scale, insets and touch gestures ---- */
 
-/* PDF_TOOLS_SCALE until the user changes the interface size, else the chosen interface size, else 0 for Auto. */
+/* CUTTLE_SCALE until the user changes the interface size, else the chosen interface size, else 0 for Auto. */
 static float chosen_scale(void)
 {
-    const char *env = getenv("PDF_TOOLS_SCALE");
+    const char *env = getenv("CUTTLE_SCALE");
     if (!ui.scale_chosen && env && atof(env) > 0.3) return (float)atof(env);
     return ui.scale_choice > 0 ? ui.scale_choice : 0;
 }
 
-/* The UI scale: PDF_TOOLS_SCALE until the user changes the interface size, else the chosen interface size, else the
+/* The UI scale: CUTTLE_SCALE until the user changes the interface size, else the chosen interface size, else the
  * window system's content scale when it reports one (Wayland always does), else the physical DPI of the window's
  * monitor over 96 (XWayland reports a content scale of 1 even on fractionally scaled outputs) in quarter steps from 1
  * to 3. */
