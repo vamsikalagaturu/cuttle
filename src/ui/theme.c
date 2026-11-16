@@ -43,7 +43,8 @@ static const ui_palette LIGHT = {
     .dark = HEX(0xa3adbf),
     .highlight = HEX(0x5e81ac),
     .highlighted_text = C_WHITE,
-    .disabled_text = HEX(0x7b8394),
+    /* also the secondary text everywhere: kept above 4.5:1 on .window */
+    .disabled_text = HEX(0x5c6577),
     .placeholder = HEX(0x5c6577),
     .link = HEX(0x3b6a99),
     .tooltip = HEX(0xeceff4),
@@ -68,7 +69,8 @@ static const ui_palette DARK = {
     .dark = HEX(0x272c36),
     .highlight = HEX(0x5e81ac),
     .highlighted_text = C_WHITE,
-    .disabled_text = HEX(0x6f7a8f),
+    /* also the secondary text everywhere: kept above 4.5:1 on .window */
+    .disabled_text = HEX(0xa8b1c2),
     .placeholder = HEX(0xa8b1c2),
     .link = HEX(0x88c0d0),
     .tooltip = HEX(0x3b4252),

@@ -802,7 +802,7 @@ static void tab_strip(Rectangle r)
         Color fg = current ? pal.highlighted_text : hover ? pal.window_text : with_alpha(pal.window_text, 170);
         font_kind fk = current ? F_BOLD : F_REGULAR;
         float tx = tr.x + 12, cy = tr.y;
-        if (w->kind == TAB_HOME) draw_logo((Rectangle){tx, cy + (tr.height - 16) / 2, 16, 16}), tx += 20;
+        if (w->kind == TAB_HOME) draw_icon("file-pen-line", (Rectangle){tx, cy + (tr.height - 16) / 2, 16, 16}, fg), tx += 20;
         else if (w->kind == TAB_WORKSPACE)
             draw_icon("merge", (Rectangle){tx, cy + (tr.height - 16) / 2, 16, 16}, fg), tx += 20;
         else if (w->kind == TAB_COMPARE)
@@ -1031,7 +1031,8 @@ static float frame_chrome(tab *t, win_tab *cur, float y)
     Rectangle logo = {40, y + 6, 32, 32};
     if (ui_hover(logo)) set_cursor(CUR_HAND);
     if (ui_button(ui_id_str("logo", 0), logo, NULL, NULL, B_FLAT, "Home")) app_go_home();
-    draw_logo((Rectangle){logo.x + 7, logo.y + 7, 18, 18});
+    /* the logo's glyph alone, as large as the button's icons allow: its dark tile would vanish into the header */
+    draw_icon("file-pen-line", (Rectangle){logo.x + 5, logo.y + 5, 22, 22}, pal.link);
     Rectangle tools = {74, y, ui.w - 80, HEADER_H};
     if (t) tab_toolbar(t, tools);
     else if (cur && cur->kind == TAB_WORKSPACE) workspace_toolbar(app.ws, tools);
