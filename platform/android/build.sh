@@ -79,7 +79,8 @@ cp "$APK/dex/classes.dex" "$APK/classes.dex"
 mkdir -p "$ROOT/out"
 if [ -n "${PT_ANDROID_KEYSTORE:-}" ]; then
     # env: keeps the password off the command line
-    "$BT/apksigner" sign --ks "$PT_ANDROID_KEYSTORE" --ks-key-alias cuttle \
+    # the key's alias in the release keystore (secret ANDROID_KEYSTORE_BASE64) dates from before the rename
+    "$BT/apksigner" sign --ks "$PT_ANDROID_KEYSTORE" --ks-key-alias pdf-tools \
         --ks-pass env:PT_ANDROID_KEYSTORE_PASSWORD --key-pass env:PT_ANDROID_KEYSTORE_PASSWORD \
         --out "$ROOT/out/cuttle.apk" "$APK/aligned.apk"
 else

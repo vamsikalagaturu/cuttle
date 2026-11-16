@@ -16,12 +16,12 @@ debug signing key; nothing is written into the repo. Re-runs are incremental.
 
 Release APKs (`.github/workflows/release.yml`) are all signed with one permanent key, so a new version installs
 over the old one. `build.sh` uses it when `PT_ANDROID_KEYSTORE` (the `.jks`) and `PT_ANDROID_KEYSTORE_PASSWORD`
-are set (key alias `cuttle`, key password = store password); otherwise it signs with the local debug key. The
+are set (key alias `pdf-tools`, the app's name when the key was made; key password = store password); otherwise it signs with the local debug key. The
 release job takes them from two repository secrets and fails without them. Create the key once, keep the `.jks`
 and its password safe (a lost key means users must uninstall to update), and store both as secrets:
 
 ```sh
-keytool -genkeypair -keystore ~/cuttle-release.jks -alias cuttle -keyalg RSA -keysize 4096 -validity 36500 -dname "CN=cuttle"
+keytool -genkeypair -keystore ~/cuttle-release.jks -alias pdf-tools -keyalg RSA -keysize 4096 -validity 36500 -dname "CN=cuttle"
 base64 -w0 ~/cuttle-release.jks | gh secret set ANDROID_KEYSTORE_BASE64
 gh secret set ANDROID_KEYSTORE_PASSWORD      # prompts for the password
 ```

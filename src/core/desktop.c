@@ -28,12 +28,22 @@ void pt_desktop_targets(char **entry, char **icon)
     free(base);
 }
 
-/* `path` as one quoted Exec= argument (Desktop Entry Specification, "The Exec key"): ", `, $ and \ take a backslash
- * inside the quotes, the string escaping of the file doubles every backslash after that, and % is written %%. */
+/* `path` as one Exec= argument (Desktop Entry Specification, "The Exec key"), % written %%. Quoted only when it has
+ * a reserved character: xdg-utils (xdg-mime, xdg-open) takes the quotes as part of the program's name, finds no such
+ * program and passes over the entry. Inside the quotes ", `, $ and \ take a backslash, and the string escaping of
+ * the file doubles every backslash after that. */
 static char *exec_argument(const char *path)
 {
     char *q = malloc(strlen(path) * 4 + 3), *p = q;
     if (!q) abort();
+    if (!strpbrk(path, " \t\n\"'\\><~|&;$*?#()`")) {
+        for (const char *s = path; *s; s++) {
+            if (*s == '%') *p++ = '%';
+            *p++ = *s;
+        }
+        *p = 0;
+        return q;
+    }
     *p++ = '"';
     for (const char *s = path; *s; s++) {
         if (*s == '"' || *s == '`' || *s == '$') *p++ = '\\', *p++ = '\\';
