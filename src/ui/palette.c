@@ -544,7 +544,7 @@ static void ex_set(const pt_ex *ex)
     else if (ex->set == PT_EX_SET_VALUE && d->type == PT_SET_INT)
         pt_settings_set_int(&app.settings, d->key, (int)strtol(ex->arg, NULL, 10));
     else if (ex->set == PT_EX_SET_VALUE) pt_settings_set_str(&app.settings, d->key, ex->arg);
-    if (!strcmp(d->key, "theme") || !strncmp(d->key, "accent_colour", strlen("accent_colour")))
+    if (!strcmp(d->key, "theme"))
         app_set_theme(pt_settings_str(&app.settings, "theme"));
     if (!strncmp(d->key, "line_numbers", strlen("line_numbers"))) line_numbers_changed();
     char *shown = is_number && d->type == PT_SET_BOOL

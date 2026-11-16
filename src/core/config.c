@@ -37,8 +37,6 @@ const pt_setting_def pt_settings_defs[] = {
     {"recent_files", PT_SET_LIST, NULL, 0, "Recently opened PDFs, newest first"},
     {"starred_files", PT_SET_LIST, NULL, 0, "Starred files, newest first, listed first on the Home tab"},
     {"favourite_colours", PT_SET_LIST, NULL, 0, "Favourite colours (#rrggbb), offered wherever a colour is picked"},
-    {"accent_colour_dark", PT_SET_STR, "", 0, "Accent colour (#rrggbb) of the dark theme; empty: Nord blue"},
-    {"accent_colour_light", PT_SET_STR, "", 0, "Accent colour (#rrggbb) of the light theme; empty: Nord blue"},
     {"ocr_language", PT_SET_STR, "eng", 0, "Tesseract language(s) for text recognition, e.g. eng or deu+eng"},
     {"signing_certificate", PT_SET_STR, "", 0,
      "The .p12/.pfx certificate used last to sign (its password is never stored)"},

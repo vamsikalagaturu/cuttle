@@ -1,7 +1,6 @@
-/* The dark and light themes: the colours every widget draws with (pal), which app.c sets from the theme and accent
- * colour settings; and the colour helpers of ui.h. */
+/* The dark and light themes: the colours every widget draws with (pal), which app.c sets from the theme setting;
+ * and the colour helpers of ui.h. */
 #include "ui.h"
-#include <stdio.h>
 #include <string.h>
 
 #define HEX(v)                                                                         \
@@ -83,9 +82,6 @@ static const ui_palette DARK = {
     .dark_mode = 1,
 };
 
-/* text on the accent: whichever of these contrasts more (Rec. 709 luma) */
-static const Color ON_LIGHT_ACCENT = HEX(0x111111), ON_DARK_ACCENT = C_WHITE;
-
 ui_palette pal;
 
 Color with_alpha(Color c, int a)
@@ -102,11 +98,4 @@ void theme_apply(const char *mode)
     pal.redact_preview = with_alpha(BLACK, 90);
     pal.present_label = with_alpha(BLACK, 160);
     pal.check_bg = with_alpha(WHITE, 230);
-    const char *accent = pt_settings_str(&app.settings, pal.dark_mode ? "accent_colour_dark" : "accent_colour_light");
-    unsigned v;
-    if (accent && accent[0] == '#' && strlen(accent) == 7 && sscanf(accent + 1, "%6x", &v) == 1) {
-        pal.highlight = (Color)HEX(v);
-        float luma = 0.2126f * pal.highlight.r + 0.7152f * pal.highlight.g + 0.0722f * pal.highlight.b;
-        pal.highlighted_text = luma > 150 ? ON_LIGHT_ACCENT : ON_DARK_ACCENT;
-    }
 }

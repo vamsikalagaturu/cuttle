@@ -30,7 +30,7 @@ typedef struct {
 } ui_palette;
 
 extern ui_palette pal;
-void theme_apply(const char *mode); /* "light", else dark; the accent colour comes from app.settings */
+void theme_apply(const char *mode); /* "light", else dark */
 Color with_alpha(Color c, int a);
 Color rgb3(const unsigned char rgb[3]);
 

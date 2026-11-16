@@ -280,31 +280,6 @@ void app_set_theme(const char *mode)
     theme_apply(mode);
 }
 
-static const char *accent_key(void) { return pal.dark_mode ? "accent_colour_dark" : "accent_colour_light"; }
-
-static void accent_picked(void *ctx, const unsigned char rgb[3])
-{
-    (void)ctx;
-    if (!rgb) return;
-    char hex[8];
-    snprintf(hex, sizeof hex, "#%02x%02x%02x", rgb[0], rgb[1], rgb[2]);
-    pt_settings_set_str(&app.settings, accent_key(), hex);
-    theme_apply(pt_settings_str(&app.settings, "theme"));
-}
-
-static void pick_accent(void)
-{
-    unsigned char rgb[3] = {pal.highlight.r, pal.highlight.g, pal.highlight.b};
-    colour_dialog(pal.dark_mode ? "Accent colour (dark theme)" : "Accent colour (light theme)", rgb, accent_picked,
-                  NULL);
-}
-
-static void reset_accent(void)
-{
-    pt_settings_set_str(&app.settings, accent_key(), "");
-    theme_apply(pt_settings_str(&app.settings, "theme"));
-}
-
 #ifndef __ANDROID__
 static float interface_size_setting(void)
 {
@@ -514,8 +489,6 @@ static void m_action(void *ctx, intptr_t a)
     case 9: app_set_theme("dark"); break;
     case 10: app_set_theme("light"); break;
     case 11: app_about(); break;
-    case 12: pick_accent(); break;
-    case 13: reset_accent(); break;
     case 14: ebook_layout_dialog(); break;
     case 15: palette_open(); break;
     case 16: keymap_dialog(); break;
@@ -592,8 +565,8 @@ ui_menu *app_build_menu(tab *t)
     int dark = strcmp(pt_settings_str(&app.settings, "theme"), "light");
     menu_item(a, "Dark", "dark", NULL, m_action, NULL, 9, 1, dark);
     menu_item(a, "Light", "light", NULL, m_action, NULL, 10, 1, !dark);
-    menu_sep(a);
 #ifndef __ANDROID__
+    menu_sep(a);
     ui_menu *size = menu_sub(a, "Interface size", "interface-size");
     menu_item(size, "Auto", "interface-size", keymap_label("ui.auto"), m_size, NULL, 0, 1, ui.scale_choice == 0);
     static const int PERCENT[] = {75, 100, 125, 150, 175, 200};
@@ -603,11 +576,7 @@ ui_menu *app_build_menu(tab *t)
         menu_item(size, label, "interface-size", NULL, m_size, NULL, PERCENT[i], 1,
                   fabsf(ui.scale_choice * 100 - PERCENT[i]) < 0.5f);
     }
-    menu_sep(a);
 #endif
-    menu_item(a, "Accent colour...", "custom-colour", NULL, m_action, NULL, 12, 1, 0);
-    menu_item(a, "Reset accent colour", "undo", NULL, m_action, NULL, 13, *pt_settings_str(&app.settings, accent_key()),
-              0);
     menu_sep(m);
     menu_item(m, "Command palette...", "search", keymap_label("palette"), m_action, NULL, 15, 1, 0);
     menu_item(m, "Keyboard shortcuts...", "keyboard", keymap_label("shortcuts"), m_action, NULL, 16, 1, 0);
