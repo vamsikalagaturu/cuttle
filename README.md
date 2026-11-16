@@ -217,8 +217,8 @@ app or (after the app closes) the Windows folder; on Android the system installe
 `build.sh install PREFIX` that you can write (e.g. `~/.local`) gets the tarball's files put over its own one by one
 (the program, `share/cuttle`, the man page, the launcher entry and icon; nothing else in the prefix is touched,
 and a launcher entry keeps its `Exec=` line). Installs the app cannot replace itself (a distro package, a prefix
-such as `/usr/local` you may not write, a folder it may not write) get the release page instead. Menu > Check for updates... checks now; Menu > Check for updates at startup (`check_updates` in the
-settings) turns the check off. Desktop downloads go through the system's `curl`. `cuttle update` does the same
+such as `/usr/local` you may not write, a folder it may not write) get the release page instead. Menu > About cuttle has Check for updates, and its Check for updates at startup
+(`check_updates` in the settings) turns the daily check off. Desktop downloads go through the system's `curl`. `cuttle update` does the same
 without the window (`--check` only reports, `--force` also replaces a development build); it is the only command that
 uses the network.
 

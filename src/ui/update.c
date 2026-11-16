@@ -313,18 +313,37 @@ void update_bar(Rectangle r)
     free(shown);
 }
 
-static void m_update(void *ctx, intptr_t a)
+/* About: the version and licences, and the updates (as in jackdaw's Settings > About and ferret's About) */
+static int about_frame(dialog *d, Rectangle b)
 {
-    (void)ctx;
-    if (a == 0) start_check(1);
-    else pt_settings_set_int(&app.settings, "check_updates", !pt_settings_int(&app.settings, "check_updates"));
+    static const char *const LINES[] = {
+        APP_NAME " " PT_VERSION, "View, redact, fill, annotate, sign and merge PDFs.", REPO_URL, "",
+        "License: AGPL-3.0-or-later. Icons: Lucide (ISC). UI font: Noto Sans (OFL-1.1).",
+        "Native build: MuPDF, raylib, raygui."};
+    float y = b.y;
+    for (int i = 0; i < (int)(sizeof LINES / sizeof *LINES); i++, y += 24)
+        draw_text_in(LINES[i], (Rectangle){b.x, y, b.width, 24}, i ? FS_NORMAL : FS_LARGE, i ? F_REGULAR : F_BOLD,
+                     i == 2 ? pal.link : i > 3 ? pal.disabled_text : pal.window_text, -1);
+    y += 12;
+    int at_start = pt_settings_int(&app.settings, "check_updates");
+    if (ui_checkbox(ui_id(d, 1), (Rectangle){b.x, y, b.width, 28}, "Check for updates at startup", &at_start, 0))
+        pt_settings_set_int(&app.settings, "check_updates", at_start);
+    Rectangle close = {b.x + b.width - 100, b.y + b.height - 32, 100, 32};
+    float cw = button_width(running ? "Checking..." : "Check for updates", "rotate-cw", 0);
+    Rectangle check = {close.x - 8 - cw, close.y, cw, 32};
+    if (ui_button(ui_id(d, 2), check, running ? "Checking..." : "Check for updates", "rotate-cw", running ? B_DISABLED : 0,
+                  NULL))
+        start_check(1);
+    return ui_button(ui_id(d, 3), close, "Close", NULL, B_PRIMARY, NULL);
 }
 
-void update_menu_items(ui_menu *m)
+static void about_free(dialog *d) { (void)d; }
+
+void about_dialog(void)
 {
-    menu_item(m, "Check for updates...", "rotate-cw", NULL, m_update, NULL, 0, !running, 0);
-    menu_item(m, "Check for updates at startup", "history", NULL, m_update, NULL, 1, 1,
-              pt_settings_int(&app.settings, "check_updates"));
+    dialog *d = calloc(1, sizeof *d);
+    *d = (dialog){"About " APP_NAME, 560, 290, about_frame, about_free, NULL, 1};
+    dialog_push(d);
 }
 
 #if defined(__linux__) && !defined(__ANDROID__)

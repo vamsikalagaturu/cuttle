@@ -398,14 +398,7 @@ void app_handle_message(const char *text)
 
 /* ---- the menu ---- */
 
-void app_about(void)
-{
-    message_box(MSG_INFO, "About " APP_NAME,
-                APP_NAME " " PT_VERSION "\n\nView, redact, fill, annotate, sign and merge PDFs.\n\n" REPO_URL
-                         "\n\nLicense: AGPL-3.0-or-later. Icons: Lucide (ISC). UI font: Noto Sans (OFL-1.1).\n"
-                         "Native build: MuPDF, raylib, raygui.",
-                NULL, NULL);
-}
+void app_about(void) { about_dialog(); }
 
 static int document_dark, document_dark_pending;
 
@@ -583,8 +576,7 @@ ui_menu *app_build_menu(tab *t)
     menu_sep(m);
     menu_item(m, "Command palette...", "search", keymap_label("palette"), m_action, NULL, 15, 1, 0);
     menu_item(m, "Keyboard shortcuts...", "keyboard", keymap_label("shortcuts"), m_action, NULL, 16, 1, 0);
-    update_menu_items(m);
-    menu_item(m, "About " APP_NAME, "about", NULL, m_action, NULL, 11, 1, 0);
+    menu_item(m, "About " APP_NAME "...", "about", NULL, m_action, NULL, 11, 1, 0);
     return m;
 }
 

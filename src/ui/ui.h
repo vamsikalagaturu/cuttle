@@ -497,7 +497,7 @@ void update_start(void); /* at startup: checks when check_updates is on and a da
 void update_poll(void);  /* each turn of the main loop: takes a finished check or download; never blocks */
 float update_bar_height(void); /* 0 while no bar is shown */
 void update_bar(Rectangle r);  /* the "is available" bar with Update and Later, or the download's progress */
-void update_menu_items(ui_menu *m);
+void about_dialog(void); /* version, licences, Check for updates and the startup check */
 /* at exit, after ipc_stop(): stops a running download, starts the updated program when a restart was asked for and
  * on Windows the helper that swaps the folders */
 void update_stop(void);
