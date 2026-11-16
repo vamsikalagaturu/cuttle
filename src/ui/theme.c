@@ -155,8 +155,9 @@ void theme_apply(const char *mode)
     pal.light = light ? c[R_LIGHTER_BACKGROUND] : mix(window, fg, 0.15f);
     pal.dark = light ? mix(window, fg, 0.30f) : c[R_DARK_BACKGROUND];
     /* filled areas (current tab, chosen tool, buttons): a dark theme's accent is a light colour made for text and
-     * lines, too loud as a fill, so it is taken 40% toward the background there; links keep it whole */
-    pal.highlight = light ? c[R_ACCENT] : mix(c[R_ACCENT], bg, 0.40f);
+     * lines, too loud as a fill, so they take the theme's blue (Nord: Frost nord9) with dark text; links keep the
+     * accent */
+    pal.highlight = light ? c[R_ACCENT] : c[R_BLUE];
     /* whichever of the theme's darkest and lightest text reads on that fill */
     Color darkest = light ? c[R_BRIGHT_FOREGROUND] : bg, lightest = light ? (Color)C_WHITE : c[R_BRIGHT_FOREGROUND];
     pal.highlighted_text = luma(pal.highlight) > 0.55f ? darkest : lightest;
