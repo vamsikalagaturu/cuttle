@@ -316,24 +316,37 @@ void update_bar(Rectangle r)
 /* About: the version and licences, and the updates (as in jackdaw's Settings > About and ferret's About) */
 static int about_frame(dialog *d, Rectangle b)
 {
-    static const char *const LINES[] = {
-        APP_NAME " " PT_VERSION, "View, redact, fill, annotate, sign and merge PDFs.", REPO_URL, "",
-        "License: AGPL-3.0-or-later. Icons: Lucide (ISC). UI font: Noto Sans (OFL-1.1).",
-        "Native build: MuPDF, raylib, raygui."};
-    float y = b.y;
-    for (int i = 0; i < (int)(sizeof LINES / sizeof *LINES); i++, y += 24)
-        draw_text_in(LINES[i], (Rectangle){b.x, y, b.width, 24}, i ? FS_NORMAL : FS_LARGE, i ? F_REGULAR : F_BOLD,
-                     i == 2 ? pal.link : i > 3 ? pal.disabled_text : pal.window_text, -1);
-    y += 12;
+    /* the logo beside the name, version and what it does */
+    const float logo = 64, tx = b.x + logo + 16, tw = b.width - logo - 16;
+    draw_logo((Rectangle){b.x, b.y, logo, logo});
+    draw_text_in(APP_NAME, (Rectangle){tx, b.y, tw, 26}, FS_LARGE, F_BOLD, pal.window_text, -1);
+    draw_text_in("Version " PT_VERSION, (Rectangle){tx, b.y + 24, tw, 22}, FS_NORMAL, F_REGULAR, pal.disabled_text, -1);
+    draw_text_in("View, redact, fill, annotate, sign and merge PDFs.", (Rectangle){tx, b.y + 46, tw, 22}, FS_NORMAL,
+                 F_REGULAR, pal.window_text, -1);
+    draw_text_in(REPO_URL, (Rectangle){tx, b.y + 70, tw, 22}, FS_NORMAL, F_REGULAR, pal.link, -1);
+
+    /* the updates, on one row */
+    float y = b.y + 108;
+    ui_separator_h(b.x, b.x + b.width, y);
+    y += 14;
+    const char *check_label = running ? "Checking..." : "Check for updates";
+    float cw = button_width(check_label, "rotate-cw", 0);
     int at_start = pt_settings_int(&app.settings, "check_updates");
-    if (ui_checkbox(ui_id(d, 1), (Rectangle){b.x, y, b.width, 28}, "Check for updates at startup", &at_start, 0))
+    if (ui_checkbox(ui_id(d, 1), (Rectangle){b.x, y + 2, b.width - cw - 16, 28}, "Check for updates at startup",
+                    &at_start, 0))
         pt_settings_set_int(&app.settings, "check_updates", at_start);
-    Rectangle close = {b.x + b.width - 100, b.y + b.height - 32, 100, 32};
-    float cw = button_width(running ? "Checking..." : "Check for updates", "rotate-cw", 0);
-    Rectangle check = {close.x - 8 - cw, close.y, cw, 32};
-    if (ui_button(ui_id(d, 2), check, running ? "Checking..." : "Check for updates", "rotate-cw", running ? B_DISABLED : 0,
-                  NULL))
+    if (ui_button(ui_id(d, 2), (Rectangle){b.x + b.width - cw, y, cw, 32}, check_label, "rotate-cw",
+                  running ? B_DISABLED : 0, NULL))
         start_check(1);
+    y += 32 + 14;
+    ui_separator_h(b.x, b.x + b.width, y);
+
+    /* the licences as small print beside Close */
+    Rectangle close = {b.x + b.width - 100, b.y + b.height - 32, 100, 32};
+    draw_text_in("AGPL-3.0-or-later. MuPDF, raylib, raygui.", (Rectangle){b.x, close.y - 4, close.x - b.x - 12, 20},
+                 FS_SMALL, F_REGULAR, pal.disabled_text, -1);
+    draw_text_in("Icons: Lucide (ISC). Font: Noto Sans (OFL-1.1).", (Rectangle){b.x, close.y + 16, close.x - b.x - 12, 20},
+                 FS_SMALL, F_REGULAR, pal.disabled_text, -1);
     return ui_button(ui_id(d, 3), close, "Close", NULL, B_PRIMARY, NULL);
 }
 
@@ -342,7 +355,7 @@ static void about_free(dialog *d) { (void)d; }
 void about_dialog(void)
 {
     dialog *d = calloc(1, sizeof *d);
-    *d = (dialog){"About " APP_NAME, 560, 290, about_frame, about_free, NULL, 1};
+    *d = (dialog){"About " APP_NAME, 560, 250, about_frame, about_free, NULL, 1};
     dialog_push(d);
 }
 
