@@ -37,9 +37,9 @@ Color rgb3(const unsigned char rgb[3]);
 /* ---- fonts and text ---- */
 typedef enum { F_REGULAR, F_BOLD } font_kind;
 
-#define FS_SMALL 12.0f
-#define FS_NORMAL 14.0f
-#define FS_LARGE 18.0f
+#define FS_SMALL 14.0f
+#define FS_NORMAL 16.0f
+#define FS_LARGE 20.0f
 void ui_fonts_load(void);
 float text_width(const char *s, float size, font_kind f);
 void draw_text(const char *s, float x, float y, float size, font_kind f, Color c);
