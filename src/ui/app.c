@@ -488,6 +488,7 @@ static void m_action(void *ctx, intptr_t a)
         break;
     case 9: app_set_theme("dark"); break;
     case 10: app_set_theme("light"); break;
+    case 12: app_set_theme("system"); break;
     case 11: app_about(); break;
     case 14: ebook_layout_dialog(); break;
     case 15: palette_open(); break;
@@ -562,10 +563,12 @@ ui_menu *app_build_menu(tab *t)
               pt_settings_int(&app.settings, "vim_key_hints"));
     menu_item(v, "E-book layout...", "two-pages", NULL, m_action, NULL, 14, 1, 0);
     ui_menu *a = menu_sub(v, "Appearance", "appearance");
-    int dark = strcmp(pt_settings_str(&app.settings, "theme"), "light");
-    menu_item(a, "Dark", "dark", NULL, m_action, NULL, 9, 1, dark);
-    menu_item(a, "Light", "light", NULL, m_action, NULL, 10, 1, !dark);
+    const char *scheme = pt_settings_str(&app.settings, "theme");
+    int light = !strcmp(scheme, "light"), system = !strcmp(scheme, "system");
+    menu_item(a, "Dark", "dark", NULL, m_action, NULL, 9, 1, !light && !system);
+    menu_item(a, "Light", "light", NULL, m_action, NULL, 10, 1, light);
 #ifndef __ANDROID__
+    menu_item(a, "System", "appearance", NULL, m_action, NULL, 12, 1, system);
     menu_sep(a);
     ui_menu *size = menu_sub(a, "Interface size", "interface-size");
     menu_item(size, "Auto", "interface-size", keymap_label("ui.auto"), m_size, NULL, 0, 1, ui.scale_choice == 0);
@@ -1580,17 +1583,17 @@ void home_frame(Rectangle area)
                      F_REGULAR, pal.disabled_text, 0);
         y += 48;
     }
-    float bw = fminf(fmaxf(170, button_width("Combine & split PDFs...", "merge", 0) + 20),
+    float bw = fminf(fmaxf(170, button_width("Combine & split PDFs", "merge", 0) + 20),
                      (w - (HOME_BUTTONS - 1) * HOME_BUTTON_GAP) / HOME_BUTTONS);
     float bx = x + (w - (bw * HOME_BUTTONS + (HOME_BUTTONS - 1) * HOME_BUTTON_GAP)) / 2;
-    if (ui_button(ui_id_str("home-open", 0), (Rectangle){bx, y, bw, 44}, "Open PDF...", "open", 0, NULL))
+    if (ui_button(ui_id_str("home-open", 0), (Rectangle){bx, y, bw, 44}, "Open PDF", "open", 0, NULL))
         app_open_dialog();
     bx += bw + HOME_BUTTON_GAP;
-    if (ui_button(ui_id_str("home-new", 0), (Rectangle){bx, y, bw, 44}, "New blank PDF...", "new-pdf", 0,
+    if (ui_button(ui_id_str("home-new", 0), (Rectangle){bx, y, bw, 44}, "New blank PDF", "new-pdf", 0,
                   "An empty PDF to add form fields, text and images to"))
         new_pdf_dialog();
     bx += bw + HOME_BUTTON_GAP;
-    if (ui_button(ui_id_str("home-merge", 0), (Rectangle){bx, y, bw, 44}, "Combine & split PDFs...", "merge", 0, NULL))
+    if (ui_button(ui_id_str("home-merge", 0), (Rectangle){bx, y, bw, 44}, "Combine & split PDFs", "merge", 0, NULL))
         app_open_workspace(NULL);
     y += 44 + 26;
     if (total) {

@@ -15,7 +15,7 @@
 /* ---- the known settings ---- */
 
 const pt_setting_def pt_settings_defs[] = {
-    {"theme", PT_SET_STR, "dark", 0, "dark | light"},
+    {"theme", PT_SET_STR, "dark", 0, "dark | light | system (as light or dark as the desktop theme)"},
     {"ui_scale", PT_SET_STR, "auto", 0,
      "Interface size: \"auto\", or a factor from 0.75 to 3 as a quoted string (e.g. \"1.25\")"},
     {"view_mode", PT_SET_STR, "continuous", 0, "continuous | single"},
@@ -55,6 +55,20 @@ const pt_setting_def pt_settings_defs[] = {
      "Vim keys in the page view (j/k, gg/G, /, n/N...); the tool letters then follow the leader key (Space)"},
     {"vim_key_hints", PT_SET_BOOL, NULL, 1,
      "With vim keys, a pause after the leader, g, ] or [ lists the keys that can follow it"},
+    /* the [theme] table, as in jackdaw and ferret: the colour roles of the desktop's colors.toml; written last */
+    {"theme.accent", PT_SET_STR, "", 0, "#rrggbb; empty: the desktop theme's colors.toml, else Nord"},
+    {"theme.background", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.dark_background", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.lighter_background", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.foreground", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.bright_foreground", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.red", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.yellow", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.green", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.blue", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.magenta", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.cyan", PT_SET_STR, "", 0, "#rrggbb"},
+    {"theme.orange", PT_SET_STR, "", 0, "#rrggbb"},
 };
 const int pt_settings_count = sizeof pt_settings_defs / sizeof *pt_settings_defs;
 
@@ -224,13 +238,20 @@ static const char *parse_value(const char *s, tvalue *v)
 
 /* One key = value or [table] line (a value may span lines); NULL when it is not valid TOML as far as this reader
  * goes. */
-static const char *parse_line(const char *s, int *in_table, void (*on)(void *, const char *, tvalue *), void *opaque)
+/* table: the [table] the line is in, "" at the top level; "\x01" for an array of tables ([[...]]), whose keys are
+ * skipped. A key inside a table comes to `on` as "table.key". */
+static const char *parse_line(const char *s, char table[64], void (*on)(void *, const char *, tvalue *), void *opaque)
 {
     if (*s == '[') {
         const char *end = strchr(s, ']');
         const char *nl = strchr(s, '\n');
         if (!end || (nl && nl < end)) return NULL;
-        *in_table = 1;
+        if (s[1] == '[') snprintf(table, 64, "\x01");
+        else {
+            const char *n = skip_ws(s + 1), *e = end;
+            while (e > n && (e[-1] == ' ' || e[-1] == '\t')) e--;
+            snprintf(table, 64, "%.*s", (int)(e - n), n);
+        }
         s = end + 1;
         if (*s == ']') s++;
         return s;
@@ -248,7 +269,12 @@ static const char *parse_line(const char *s, int *in_table, void (*on)(void *, c
     if (s) {
         const char *rest = skip_ws(s);
         if (*rest && *rest != '#' && *rest != '\n' && *rest != '\r') s = NULL;
-        else if (!*in_table) on(opaque, key, &v);
+        else if (!table[0]) on(opaque, key, &v);
+        else if (table[0] != '\x01') {
+            char full[200];
+            snprintf(full, sizeof full, "%s.%s", table, key);
+            on(opaque, full, &v);
+        }
     }
     free(v.str);
     pt_strs_free(&v.list);
@@ -260,7 +286,8 @@ static const char *parse_line(const char *s, int *in_table, void (*on)(void *, c
 static int parse_toml(const char *text, void (*on)(void *, const char *, tvalue *), void *opaque)
 {
     const char *s = text;
-    int in_table = 0, bad = 0;
+    char table[64] = "";
+    int bad = 0;
     while (*s) {
         s = skip_ws(s);
         if (*s == '\n' || *s == '\r') {
@@ -272,7 +299,7 @@ static int parse_toml(const char *text, void (*on)(void *, const char *, tvalue 
             continue;
         }
         const char *start = s;
-        s = parse_line(s, &in_table, on, opaque);
+        s = parse_line(s, table, on, opaque);
         if (!s) {
             if (!bad) {
                 bad = 1;
@@ -292,7 +319,8 @@ static int parse_toml(const char *text, void (*on)(void *, const char *, tvalue 
 static void on_value(void *opaque, const char *key, tvalue *v)
 {
     pt_settings *s = opaque;
-    int i = index_of(key);
+    /* [theme] scheme is the "theme" setting (the top-level `theme = ...` of older files still is too) */
+    int i = index_of(!strcmp(key, "theme.scheme") ? "theme" : key);
     if (i < 0) return;
     const pt_setting_def *d = &pt_settings_defs[i];
     pt_setting_value *val = &s->values[i];
@@ -502,17 +530,24 @@ int pt_settings_save(const pt_settings *s)
 {
     if (s->keep_file) return -1;
     toml_text b = {0};
-    put(&b, "# cuttle settings. Edit while the app is closed; unknown keys and wrong types are ignored.\n\n");
-    for (int i = 0; i < pt_settings_count; i++) {
-        const pt_setting_def *d = &pt_settings_defs[i];
-        pt_setting_value def = {0};
-        set_default(&def, d);
-        put(&b, "# "), put(&b, d->comment), put(&b, " (default: ");
-        toml_value(&b, d, &def);
-        put(&b, ")\n"), put(&b, d->key), put(&b, " = ");
-        toml_value(&b, d, &s->values[i]);
-        put(&b, i + 1 < pt_settings_count ? "\n\n" : "\n");
-        free(def.str);
+    put(&b, "# cuttle settings. Edit while the app is closed; unknown keys and wrong types are ignored.\n");
+    /* top-level keys first, then [theme] (TOML has no top-level keys after a table): the "theme" setting as its
+     * scheme, the theme.* ones by their role */
+    for (int pass = 0; pass < 2; pass++) {
+        if (pass) put(&b, "\n[theme]\n");
+        for (int i = 0; i < pt_settings_count; i++) {
+            const pt_setting_def *d = &pt_settings_defs[i];
+            int themed = !strcmp(d->key, "theme") || !strncmp(d->key, "theme.", 6);
+            if (themed != pass) continue;
+            pt_setting_value def = {0};
+            set_default(&def, d);
+            put(&b, "\n# "), put(&b, d->comment), put(&b, " (default: ");
+            toml_value(&b, d, &def);
+            put(&b, ")\n"), put(&b, !strcmp(d->key, "theme") ? "scheme" : themed ? d->key + 6 : d->key), put(&b, " = ");
+            toml_value(&b, d, &s->values[i]);
+            put(&b, "\n");
+            free(def.str);
+        }
     }
     int rc = pt_write_file(s->path, b.v, (size_t)b.n);
     pt_vec_free(b);

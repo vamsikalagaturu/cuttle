@@ -747,6 +747,34 @@ static void test_settings_replaced(void)
 #endif
 }
 
+/* the [theme] table, as in jackdaw and ferret: scheme is the "theme" setting, the roles are theme.<role>; a file
+ * of before the table (top-level theme) still reads; saving writes the table after the top-level keys */
+static void test_settings_theme_table(void)
+{
+    char *path = tmp_path("theme.toml");
+    const char *text = "ui_scale = \"auto\"\n[theme]\nscheme = \"light\"\naccent = \"#112233\"\n[other]\naccent = \"#ffffff\"\n";
+    pt_write_file(path, text, strlen(text));
+    pt_settings s;
+    pt_settings_load(&s, path);
+    CHECK(!strcmp(pt_settings_str(&s, "theme"), "light") && !strcmp(pt_settings_str(&s, "theme.accent"), "#112233"));
+    pt_settings_set_str(&s, "theme", "system");
+    pt_settings_free(&s);
+    pt_bytes b = {0};
+    CHECK(!pt_read_file(path, &b));
+    char *saved = calloc(b.len + 1, 1);
+    memcpy(saved, b.data, b.len);
+    char *table = strstr(saved, "\n[theme]\n");
+    CHECK(table && strstr(table, "\nscheme = \"system\"\n") && strstr(table, "\naccent = \"#112233\"\n") &&
+          !strstr(saved, "\ntheme = ") && strstr(saved, "\nui_scale = ") < table);
+    free(saved), free(b.data);
+
+    pt_write_file(path, "theme = \"light\"\n", 16);
+    pt_settings_load(&s, path);
+    CHECK(!strcmp(pt_settings_str(&s, "theme"), "light"));
+    pt_settings_free(&s);
+    free(path);
+}
+
 /* the words of a two-column page, in reading order */
 static char *reading_order_text(fz_context *c, const char *path)
 {
@@ -1902,6 +1930,7 @@ int main(void)
     test_ex();
     test_words_range();
     test_settings_replaced();
+    test_settings_theme_table();
     test_reading_order_threads();
     test_merge_encrypted();
     test_personal_data();
