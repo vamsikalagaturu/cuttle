@@ -1559,7 +1559,11 @@ void home_frame(Rectangle area)
     int rows = total < HOME_ROWS_MAX ? total : HOME_ROWS_MAX;
     float full_h = rows * ROW_HEIGHT + sections * HOME_SECTION_H + HOME_LIST_PAD;
     float w = fminf(620, area.width - 40);
-    float fixed_h = 44 + 26 + (total ? HOME_SEARCH_H + HOME_SEARCH_GAP + HOME_LIST_GAP : 0);
+    /* the buttons side by side when the widest label fits a third of the width, else one under another */
+    float need = fmaxf(170, button_width("Combine & split PDFs", "merge", 0) + 20);
+    int stacked = need * HOME_BUTTONS + (HOME_BUTTONS - 1) * HOME_BUTTON_GAP > w;
+    float buttons_h = stacked ? HOME_BUTTONS * 44 + (HOME_BUTTONS - 1) * HOME_BUTTON_GAP : 44;
+    float fixed_h = buttons_h + 26 + (total ? HOME_SEARCH_H + HOME_SEARCH_GAP + HOME_LIST_GAP : 0);
     /* the files matter more than the logo and the hint when the window is too short for all of them */
     int header = !total || area.height - 2 * HOME_MARGIN - fixed_h - HOME_HEADER_H - HOME_HINT_H >= HOME_LIST_MIN_H;
     if (header) fixed_h += HOME_HEADER_H + HOME_HINT_H;
@@ -1575,19 +1579,19 @@ void home_frame(Rectangle area)
                      F_REGULAR, pal.disabled_text, 0);
         y += 48;
     }
-    float bw = fminf(fmaxf(170, button_width("Combine & split PDFs", "merge", 0) + 20),
-                     (w - (HOME_BUTTONS - 1) * HOME_BUTTON_GAP) / HOME_BUTTONS);
-    float bx = x + (w - (bw * HOME_BUTTONS + (HOME_BUTTONS - 1) * HOME_BUTTON_GAP)) / 2;
-    if (ui_button(ui_id_str("home-open", 0), (Rectangle){bx, y, bw, 44}, "Open PDF", "open", 0, NULL))
+    float bw = stacked ? w : need;
+    float bx = stacked ? x : x + (w - (bw * HOME_BUTTONS + (HOME_BUTTONS - 1) * HOME_BUTTON_GAP)) / 2, by = y;
+    float step_x = stacked ? 0 : bw + HOME_BUTTON_GAP, step_y = stacked ? 44 + HOME_BUTTON_GAP : 0;
+    if (ui_button(ui_id_str("home-open", 0), (Rectangle){bx, by, bw, 44}, "Open PDF", "open", 0, NULL))
         app_open_dialog();
-    bx += bw + HOME_BUTTON_GAP;
-    if (ui_button(ui_id_str("home-new", 0), (Rectangle){bx, y, bw, 44}, "New blank PDF", "new-pdf", 0,
+    bx += step_x, by += step_y;
+    if (ui_button(ui_id_str("home-new", 0), (Rectangle){bx, by, bw, 44}, "New blank PDF", "new-pdf", 0,
                   "An empty PDF to add form fields, text and images to"))
         new_pdf_dialog();
-    bx += bw + HOME_BUTTON_GAP;
-    if (ui_button(ui_id_str("home-merge", 0), (Rectangle){bx, y, bw, 44}, "Combine & split PDFs", "merge", 0, NULL))
+    bx += step_x, by += step_y;
+    if (ui_button(ui_id_str("home-merge", 0), (Rectangle){bx, by, bw, 44}, "Combine & split PDFs", "merge", 0, NULL))
         app_open_workspace(NULL);
-    y += 44 + 26;
+    y += buttons_h + 26;
     if (total) {
         home_search.placeholder = "Search starred and recent files";
         home_search.size = FS_NORMAL;

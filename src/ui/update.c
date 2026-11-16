@@ -341,8 +341,8 @@ static int about_frame(dialog *d, Rectangle b)
     y += 32 + 14;
     ui_separator_h(b.x, b.x + b.width, y);
 
-    /* the licences as small print beside Close */
-    Rectangle close = {b.x + b.width - 100, b.y + b.height - 32, 100, 32};
+    /* the licences as small print beside Close, below the line wherever the dialog's bottom falls */
+    Rectangle close = {b.x + b.width - 100, y + 12, 100, 32};
     draw_text_in("AGPL-3.0-or-later. MuPDF, raylib, raygui.", (Rectangle){b.x, close.y - 4, close.x - b.x - 12, 20},
                  FS_SMALL, F_REGULAR, pal.disabled_text, -1);
     draw_text_in("Icons: Lucide (ISC). Font: Noto Sans (OFL-1.1).", (Rectangle){b.x, close.y + 16, close.x - b.x - 12, 20},
