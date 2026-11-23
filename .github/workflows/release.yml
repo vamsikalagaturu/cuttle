@@ -1,24 +1,49 @@
 name: Release
-# Publishing a GitHub release builds the packages from its tag and attaches them to it. The libraries come from the
-# caches ci.yml fills (same keys); on a miss build.sh builds them through deps.sh.
+# Pushing a tag vX.Y.Z releases that version: a draft release is made with CHANGELOG.md's "## [X.Y.Z]" section as its
+# notes, the packages are built from the tag and attached, and the release is published once all of them are there,
+# so the updater never sees a release without its files. The libraries come from the caches ci.yml fills on main
+# (same keys); on a miss build.sh builds them through deps.sh.
 on:
-  release:
-    types: [published]
+  push:
+    tags: ['v*']
 permissions:
   contents: write
 env:
-  TAG: ${{ github.event.release.tag_name }}
+  TAG: ${{ github.ref_name }}
   GH_TOKEN: ${{ github.token }}
   # the plain version number; any other build is marked as a development one (CMakeLists.txt)
   PT_RELEASE: "1"
 jobs:
+  notes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Draft the release with its CHANGELOG.md section as notes
+        run: |
+          version=${TAG#v}
+          notes="$RUNNER_TEMP/notes.md"
+          awk -v head="## [$version]" '
+            /^## \[/ { if (on) exit; on = index($0, head) == 1; next }
+            on' CHANGELOG.md | sed -e '/./,$!d' >"$notes"
+          if ! grep -q '[^[:space:]]' "$notes"; then
+            echo "::error file=CHANGELOG.md::no notes under a '## [$version]' heading"
+            exit 1
+          fi
+          printf '\nInstall and update as described in the [README](https://github.com/%s#install); 0.6.0 and later update themselves (Menu > About cuttle > Check for updates).\n' \
+            "$GITHUB_REPOSITORY" >>"$notes"
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft --title "cuttle $version" \
+            --notes-file "$notes"
+  publish:
+    needs: [linux, android, macos, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
   linux:
+    needs: notes
     # the oldest supported Ubuntu (24.04 and later, Arch): the binary needs the glibc it was built with or newer
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
       # before the packages are installed, as in ci.yml, so both compute the same key
       - name: Cache key (runner image, compiler, pinned versions, deps.sh)
         id: key
@@ -52,13 +77,12 @@ jobs:
             "$RUNNER_TEMP/cuttle-linux/out/cuttle-x86_64.AppImage" \
             "$RUNNER_TEMP/cuttle-linux/out/cuttle-linux-x86_64.tar.gz"
   android:
+    needs: notes
     runs-on: ubuntu-latest
     env:
       NDK_VERSION: 28.2.13676358
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
       # every release is signed with the same key, so an update installs over the previous version; outside the
       # cached and uploaded folders
       - name: Release signing key (secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD)
@@ -104,11 +128,10 @@ jobs:
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
             "$RUNNER_TEMP/cuttle-android/out/cuttle.apk"
   macos:
+    needs: notes
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
       - name: Cache key (runner image, compiler, pinned versions, deps.sh)
         id: key
         run: |
@@ -131,6 +154,7 @@ jobs:
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
             "$RUNNER_TEMP/cuttle-macos/out/cuttle.dmg"
   windows:
+    needs: notes
     runs-on: windows-latest
     defaults:
       run:
@@ -139,8 +163,6 @@ jobs:
       - name: Keep line endings as committed (bash scripts break on CRLF)
         run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.release.tag_name }}
       - name: Cache key (runner image, MSVC, pinned versions, deps.sh)
         id: key
         # the MSVC version vcvars64.bat selects, as deps.sh finds Visual Studio
