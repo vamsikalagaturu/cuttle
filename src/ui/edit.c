@@ -105,6 +105,7 @@ enum {
     A_PRINT,
     A_PREVIEW,
     A_COPY_PATH,
+    A_RENAME,
     A_SHARE,
     A_SPLIT,
     A_UNDO,
@@ -228,6 +229,8 @@ static void run(void *ctx, intptr_t a)
     case A_COPY_PATH: tab_copy_path(t); break;
 #ifdef __ANDROID__
     case A_SHARE: tab_share(t); break;
+#else
+    case A_RENAME: tab_rename(t); break;
 #endif
     case A_SPLIT: tab_split(t); break;
     case A_UNDO: tab_undo(t); break;
@@ -366,6 +369,9 @@ void tab_menu_items(tab *t, ui_menu *file, ui_menu *edit, ui_menu *tools, ui_men
         menu_item(file, "Share...", "export", NULL, run, t, A_SHARE, doc, 0);
 #endif
         menu_sep(file);
+#ifndef __ANDROID__
+        menu_item(file, "Rename...", "edit", keymap_label("rename"), run, t, A_RENAME, doc && t->path, 0);
+#endif
         menu_item(file, "Copy file path", "copy", keymap_label("copy_path"), run, t, A_COPY_PATH, doc, 0);
     }
 
@@ -579,6 +585,7 @@ static const struct {
     {"print", A_PRINT},
     {"print_preview", A_PREVIEW},
     {"copy_path", A_COPY_PATH},
+    {"rename", A_RENAME},
     {"goto", A_GOTO},
     {"rotate_left", A_ROTATE_LEFT},
     {"rotate_right", A_ROTATE_RIGHT},

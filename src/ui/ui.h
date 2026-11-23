@@ -266,6 +266,7 @@ const char *text_get(const ui_text *t);
 int ui_textfield(unsigned id, ui_text *t, Rectangle r, int frame);
 void text_focus(ui_text *t);
 void text_select_all(ui_text *t);
+void text_select_range(ui_text *t, int start, int end); /* byte offsets, clamped to the text; the caret at end */
 /* whether a caret last moved at `blink` is drawn in this frame */
 int ui_caret_shown(double blink);
 
@@ -336,6 +337,9 @@ void message_box(int kind, const char *title, const char *text, ui_answer done, 
 void question_box(const char *title, const char *text, const char *yes, const char *no, ui_answer done, void *ctx);
 typedef void (*ui_input_done)(void *ctx, const char *text); /* text NULL when cancelled */
 void input_box(const char *title, const char *prompt, const char *initial, int password, ui_input_done done, void *ctx);
+/* as input_box, with bytes [sel_start, sel_end) of initial selected at first instead of all of it */
+void input_box_select(const char *title, const char *prompt, const char *initial, int sel_start, int sel_end,
+                      ui_input_done done, void *ctx);
 typedef void (*ui_colour_done)(void *ctx, const unsigned char rgb[3]); /* rgb NULL when cancelled */
 void colour_dialog(const char *title, const unsigned char rgb[3], ui_colour_done done, void *ctx);
 /* Favourite colours (settings favourite_colours, document.c). A row of them as swatch buttons in r (one per

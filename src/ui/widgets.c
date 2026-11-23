@@ -1136,6 +1136,12 @@ void text_select_all(ui_text *t)
     t->caret = t->len;
 }
 
+void text_select_range(ui_text *t, int start, int end)
+{
+    t->anchor = start < 0 ? 0 : start > t->len ? t->len : start;
+    t->caret = end < t->anchor ? t->anchor : end > t->len ? t->len : end;
+}
+
 static void text_delete(ui_text *t, int a, int b)
 {
     if (a > b) {
@@ -2263,6 +2269,7 @@ typedef struct {
     ui_input_done done;
     void *ctx;
     int answered, first;
+    int sel_start, sel_end; /* sel_end < 0: all */
 } input_data;
 
 static void input_free(dialog *d)
@@ -2285,7 +2292,8 @@ static int input_frame(dialog *d, Rectangle body)
     pt_strs_free(&lines);
     if (in->first) {
         text_focus(&in->field);
-        text_select_all(&in->field);
+        if (in->sel_end < 0) text_select_all(&in->field);
+        else text_select_range(&in->field, in->sel_start, in->sel_end);
         in->first = 0;
     }
     int res = ui_textfield(ui_id(d, 1), &in->field, (Rectangle){body.x, y, body.width, 30}, 1);
@@ -2300,7 +2308,8 @@ static int input_frame(dialog *d, Rectangle body)
     return 0;
 }
 
-void input_box(const char *title, const char *prompt, const char *initial, int password, ui_input_done done, void *ctx)
+static void input_open(const char *title, const char *prompt, const char *initial, int password, int sel_start,
+                       int sel_end, ui_input_done done, void *ctx)
 {
     dialog *d = calloc(1, sizeof *d);
     input_data *in = calloc(1, sizeof *in);
@@ -2310,6 +2319,7 @@ void input_box(const char *title, const char *prompt, const char *initial, int p
     in->done = done;
     in->ctx = ctx;
     in->first = 1;
+    in->sel_start = sel_start, in->sel_end = sel_end;
     pt_strs lines = {0};
     wrap(prompt, 480 - 32, FS_NORMAL, &lines);
     d->title = title;
@@ -2320,6 +2330,17 @@ void input_box(const char *title, const char *prompt, const char *initial, int p
     d->free = input_free;
     d->data = in;
     dialog_push(d);
+}
+
+void input_box(const char *title, const char *prompt, const char *initial, int password, ui_input_done done, void *ctx)
+{
+    input_open(title, prompt, initial, password, 0, -1, done, ctx);
+}
+
+void input_box_select(const char *title, const char *prompt, const char *initial, int sel_start, int sel_end,
+                      ui_input_done done, void *ctx)
+{
+    input_open(title, prompt, initial, 0, sel_start, sel_end, done, ctx);
 }
 
 int ui_favourite_row(unsigned id, Rectangle r, const unsigned char current[3], unsigned char picked[3], float *used)
