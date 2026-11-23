@@ -502,6 +502,14 @@ static void test_settings(void)
     CHECK(starred && starred->n == 2 && !strcmp(starred->v[0], "/b.pdf"));
     pt_settings_toggle_starred(&s, "/b.pdf");
     CHECK(!pt_settings_is_starred(&s, "/b.pdf") && pt_settings_is_starred(&s, "/a.pdf"));
+    pt_settings_add_recent(&s, "/a.pdf");
+    pt_settings_add_recent(&s, "/c.pdf");
+    pt_settings_rename_path(&s, "/a.pdf", "/c.pdf");
+    pt_settings_free(&s);
+    pt_settings_load(&s, path);
+    const pt_strs *recent = pt_settings_list(&s, "recent_files");
+    CHECK(recent && recent->n == 1 && !strcmp(recent->v[0], "/c.pdf"));
+    CHECK(pt_settings_is_starred(&s, "/c.pdf") && !pt_settings_is_starred(&s, "/a.pdf"));
     pt_settings_free(&s);
     pt_strs_free(&fav);
     free(path);

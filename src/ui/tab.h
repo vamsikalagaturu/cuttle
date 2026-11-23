@@ -656,6 +656,7 @@ void tick_all(tab *t, int value);
 pt_synctex *tab_synctex(tab *t);             /* loaded again when stale; NULL when there is none */
 void inverse_search(tab *t, fz_point scene); /* the source line under a scene point, in editor_command */
 void tab_copy_path(tab *t);
+void tab_rename(tab *t); /* asks for a new name in the same folder; not on Android */
 void tab_share(tab *t); /* Android: the edited PDF to the system share sheet */
 void tab_save_position(tab *t);
 void mark_colour(int style, unsigned char rgb[3]);

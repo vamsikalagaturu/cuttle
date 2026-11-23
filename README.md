@@ -58,8 +58,9 @@ BSD-style and fontconfig's MIT-style licenses are permissive and impose nothing 
 ## Install
 
 Each release on the [releases page](../../releases) has a Linux AppImage and tarball, a macOS `.dmg`, a Windows
-`.zip` and an Android APK, built on GitHub Actions when the release is published. Pull requests only build and
-test the app on each platform (Actions > CI > Run workflow does the same for any branch).
+`.zip` and an Android APK, built on GitHub Actions when its tag `vX.Y.Z` is pushed; its notes are that version's
+section of [CHANGELOG.md](CHANGELOG.md). Pull requests only build and test the app on Linux, macOS and Android
+(Actions > CI > Run workflow does the same for any branch); Windows is built and tested only for a release.
 
 ### Linux
 

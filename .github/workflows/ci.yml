@@ -1,5 +1,6 @@
 name: CI
-# Pull requests build the app on each platform and run its tests, without packing (packages come from release.yml).
+# Pull requests build the app on Linux, macOS and Android and run its tests, without packing (packages come from
+# release.yml). Windows is built and tested only by release.yml; here it only fills its libraries cache on main.
 # The libraries from platform/<os>/deps.sh are cached under a key of the runner image, the compiler and the hash of
 # versions.sh and deps.sh, so only a change to one of those rebuilds them; deps.sh does not run at all on a hit.
 # No partial-key fallback: deps.sh skips a library that is already built, so a stale one would be linked as it is.
@@ -146,6 +147,8 @@ jobs:
         if: github.event_name != 'push'
         run: PT_MACOS_OUT="$RUNNER_TEMP/cuttle-macos" platform/macos/build.sh check
   windows:
+    # a release's tag cannot read a cache saved by another tag, only main's, so main fills it for release.yml
+    if: github.event_name == 'push'
     runs-on: windows-latest
     defaults:
       run:
@@ -184,6 +187,3 @@ jobs:
             ${{ runner.temp }}/cuttle-windows/src
             ${{ runner.temp }}/cuttle-windows/openssl-install
             ${{ runner.temp }}/cuttle-windows/raylib-install
-      - name: Build and test (platform/windows/build.sh check, MSVC)
-        if: github.event_name != 'push'
-        run: PT_WINDOWS_OUT="$(cygpath -u "$RUNNER_TEMP")/cuttle-windows" platform/windows/build.sh check

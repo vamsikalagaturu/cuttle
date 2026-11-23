@@ -4,6 +4,7 @@
  * watching, and the state file that moves a tab to another window. Everything here runs on the main thread. */
 #include "tab.h"
 #include "dialogs.h"
+#include <errno.h>
 #include <float.h>
 #include <math.h>
 #include <stdlib.h>
@@ -2543,6 +2544,105 @@ void tab_copy_path(tab *t)
     SetClipboardText(t->path);
     status("Path copied", 4);
 }
+
+#ifndef __ANDROID__
+static int move_lines(pt_strs *lines, const char *from, const char *to)
+{
+    size_t n = strlen(from);
+    int moved = 0;
+    for (int i = 0; i < lines->n; i++)
+        if (!strncmp(lines->v[i], from, n) && lines->v[i][n] == '\t') {
+            char *line = pt_format("%s%s", to, lines->v[i] + n);
+            free(lines->v[i]);
+            lines->v[i] = line;
+            moved++;
+        }
+    return moved;
+}
+
+static int write_lines(const char *file, const pt_strs *lines)
+{
+    size_t cap = 1;
+    for (int i = 0; i < lines->n; i++) cap += strlen(lines->v[i]) + 1;
+    char *text = calloc(cap, 1);
+    if (!text) abort();
+    for (int i = 0; i < lines->n; i++) strcat(strcat(text, lines->v[i]), "\n");
+    int rc = pt_write_file(file, text, strlen(text));
+    free(text);
+    return rc;
+}
+
+static void retarget_stores(const char *from, const char *to)
+{
+    pt_strs lines = {0};
+    read_positions(&lines);
+    char *file = positions_file();
+    if (move_lines(&lines, from, to) && write_lines(file, &lines)) status("Could not move the saved position", 4);
+    free(file);
+    pt_strs_free(&lines);
+
+    read_mark_lines(&lines);
+    file = marks_file();
+    if (move_lines(&lines, from, to) && write_lines(file, &lines)) status("Could not move the bookmarks", 4);
+    free(file);
+    pt_strs_free(&lines);
+
+    pt_settings_rename_path(&app.settings, from, to);
+}
+
+static void rename_answered(void *ctx, const char *text)
+{
+    tab *t = ctx;
+    if (!text || !t->path) return;
+    while (*text == ' ') text++;
+    char *name = pt_strdup(text);
+    for (size_t n = strlen(name); n && name[n - 1] == ' ';) name[--n] = 0;
+#ifdef _WIN32
+    int bad = strpbrk(name, "/\\:*?\"<>|") != NULL;
+#else
+    int bad = strchr(name, '/') != NULL;
+#endif
+    bad |= !*name || !strcmp(name, ".") || !strcmp(name, "..");
+    char *dir = pt_dirname(t->path), *target = pt_join(dir, name);
+    free(dir);
+    if (bad) {
+        char *msg = pt_format("\"%s\" cannot be a file name.", name);
+        message_box(MSG_ERROR, APP_NAME, msg, NULL, NULL);
+        free(msg);
+    } else if (strcmp(target, t->path)) {
+        /* a case-insensitive file system finds the file itself under a name differing only in case */
+        if (pt_exists(target) && !pt_same_file(target, t->path)) {
+            char *msg = pt_format("%s already exists in that folder; nothing was renamed.", name);
+            message_box(MSG_ERROR, APP_NAME, msg, NULL, NULL);
+            free(msg);
+        } else if (rename(t->path, target)) {
+            char *msg = pt_format("Could not rename %s:\n%s", pt_basename(t->path), strerror(errno));
+            message_box(MSG_ERROR, APP_NAME, msg, NULL, NULL);
+            free(msg);
+        } else {
+            char *old = t->path, *stem = pt_stem(old), *odir = pt_dirname(old);
+            char *sync_name = pt_format("%s.synctex.gz", stem), *sync = pt_join(odir, sync_name);
+            t->path = pt_realpath(target);
+            retarget_stores(old, t->path);
+            app_publish_state();
+            char *msg = pt_exists(sync) ? pt_format("Renamed to %s (%s keeps its name)", name, sync_name)
+                                        : pt_format("Renamed to %s", name);
+            status(msg, 6);
+            free(msg), free(sync), free(sync_name), free(odir), free(stem), free(old);
+        }
+    }
+    free(target);
+    free(name);
+}
+
+void tab_rename(tab *t)
+{
+    if (!t->doc || !t->path) return;
+    const char *base = pt_basename(t->path), *dot = strrchr(base, '.');
+    int stem = dot && dot != base ? (int)(dot - base) : (int)strlen(base);
+    input_box_select("Rename", "New name (the file stays in its folder):", base, 0, stem, rename_answered, t);
+}
+#endif
 
 #ifdef __ANDROID__
 char *pt_java(const char *method, int nargs, ...);

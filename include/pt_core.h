@@ -841,6 +841,8 @@ void pt_settings_set_str(pt_settings *s, const char *key, const char *value);
 void pt_settings_set_int(pt_settings *s, const char *key, int value);
 void pt_settings_set_list(pt_settings *s, const char *key, const pt_strs *value);
 void pt_settings_add_recent(pt_settings *s, const char *path); /* to the front of recent_files, PT_RECENT_LIMIT kept */
+/* recent_files and starred_files: from's entry becomes to, in its place; neither may point into those lists */
+void pt_settings_rename_path(pt_settings *s, const char *from, const char *to);
 int pt_settings_is_starred(const pt_settings *s, const char *path);
 /* adds to the front of starred_files or removes; path must not point into that list, which this replaces */
 void pt_settings_toggle_starred(pt_settings *s, const char *path);

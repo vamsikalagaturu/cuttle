@@ -467,6 +467,23 @@ void pt_settings_add_recent(pt_settings *s, const char *path)
     pt_strs_free(&list);
 }
 
+void pt_settings_rename_path(pt_settings *s, const char *from, const char *to)
+{
+    static const char *const LISTS[] = {"recent_files", "starred_files"};
+    for (size_t k = 0; k < sizeof LISTS / sizeof *LISTS; k++) {
+        const pt_strs *old = pt_settings_list(s, LISTS[k]);
+        pt_strs list = {0};
+        int moved = 0;
+        for (int i = 0; i < old->n; i++) {
+            if (!strcmp(old->v[i], to)) continue;
+            moved |= !strcmp(old->v[i], from);
+            pt_push(list, pt_strdup(strcmp(old->v[i], from) ? old->v[i] : to));
+        }
+        if (moved) pt_settings_set_list(s, LISTS[k], &list);
+        pt_strs_free(&list);
+    }
+}
+
 int pt_settings_is_starred(const pt_settings *s, const char *path)
 {
     const pt_strs *starred = pt_settings_list(s, "starred_files");

@@ -83,6 +83,7 @@ static const action_def ACTIONS[] = {
     {"unprotect", "Remove password...", "File", KS_DOC, {0}},
     {"print", "Print...", "File", KS_DOC, {"Ctrl+P"}},
     {"print_preview", "Print preview...", "File", KS_DOC, {0}},
+    {"rename", "Rename...", "File", KS_DOC, {"F2"}},
     {"copy_path", "Copy file path", "File", KS_DOC, {0}},
     {"combine", "Combine & split PDFs...", "File", KS_APP, {"Ctrl+M"}},
     {"quit", "Quit", "File", KS_APP, {"Ctrl+Q"}},
