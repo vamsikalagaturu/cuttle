@@ -6,6 +6,23 @@ A release's notes on GitHub are its section here, taken when its tag is pushed.
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-11-24
+
+### Added
+- **Rename on Android** (File > Rename...): Android's save dialog opens in the file's folder with its name filled in;
+  the file is saved under the new name and the old one is deleted, so later saves still reach it. Offered where the
+  app the file came from allows deleting it.
+- **One Search** (the 🔍 at the end of the tab bar, Ctrl+Shift+K): find what you type in this document or in
+  all tabs; matching tabs are listed below.
+
+### Changed
+- The toolbar's ⋮ menu and Find button are gone: their items are in the main menu (File, View), and Find is in
+  Search (Ctrl+F still opens the find bar).
+- Android: no vim keys, key hints or Keyboard shortcuts dialog; a hardware keyboard still has the default shortcuts.
+
+### Fixed
+- About: the licences and Close no longer run past the bottom of the dialog.
+
 ## [0.6.2] - 2026-11-23
 
 ### Added
