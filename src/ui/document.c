@@ -2545,7 +2545,14 @@ void tab_copy_path(tab *t)
     status("Path copied", 4);
 }
 
-#ifndef __ANDROID__
+#ifdef __ANDROID__
+/* platform/android/file_dialog_android.c */
+int pt_android_can_rename(const char *path); /* whether path is a copy whose document may be deleted */
+/* the system save dialog in the folder of copy path's document; the chosen document takes the copy and the
+ * original is deleted. done gets the copy's new path, or no path when cancelled, unchanged or failed. */
+void pt_android_rename(const char *path, ui_files_done done, void *ctx);
+#endif
+
 static int move_lines(pt_strs *lines, const char *from, const char *to)
 {
     size_t n = strlen(from);
@@ -2590,6 +2597,20 @@ static void retarget_stores(const char *from, const char *to)
     pt_settings_rename_path(&app.settings, from, to);
 }
 
+#ifdef __ANDROID__
+static void rename_picked(void *ctx, pt_strs *paths)
+{
+    tab *t = app_doc_by_id((unsigned)(uintptr_t)ctx);
+    if (!t || !t->path || !paths->n) return;
+    char *old = t->path;
+    t->path = pt_realpath(paths->v[0]);
+    retarget_stores(old, t->path);
+    app_publish_state();
+    char *msg = pt_format("Renamed to %s", pt_basename(t->path));
+    status(msg, 6);
+    free(msg), free(old);
+}
+#else
 static void rename_answered(void *ctx, const char *text)
 {
     tab *t = ctx;
@@ -2634,15 +2655,29 @@ static void rename_answered(void *ctx, const char *text)
     free(target);
     free(name);
 }
+#endif
+
+int tab_can_rename(tab *t)
+{
+    if (!t->doc || !t->path) return 0;
+#ifdef __ANDROID__
+    return pt_android_can_rename(t->path);
+#else
+    return 1;
+#endif
+}
 
 void tab_rename(tab *t)
 {
-    if (!t->doc || !t->path) return;
+    if (!tab_can_rename(t)) return;
+#ifdef __ANDROID__
+    pt_android_rename(t->path, rename_picked, (void *)(uintptr_t)t->id);
+#else
     const char *base = pt_basename(t->path), *dot = strrchr(base, '.');
     int stem = dot && dot != base ? (int)(dot - base) : (int)strlen(base);
     input_box_select("Rename", "New name (the file stays in its folder):", base, 0, stem, rename_answered, t);
-}
 #endif
+}
 
 #ifdef __ANDROID__
 char *pt_java(const char *method, int nargs, ...);
