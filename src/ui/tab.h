@@ -656,7 +656,8 @@ void tick_all(tab *t, int value);
 pt_synctex *tab_synctex(tab *t);             /* loaded again when stale; NULL when there is none */
 void inverse_search(tab *t, fz_point scene); /* the source line under a scene point, in editor_command */
 void tab_copy_path(tab *t);
-void tab_rename(tab *t); /* asks for a new name in the same folder; not on Android */
+int tab_can_rename(tab *t); /* Android: only where the document's provider allows it */
+void tab_rename(tab *t);    /* asks for a new name in the same folder */
 void tab_share(tab *t); /* Android: the edited PDF to the system share sheet */
 void tab_save_position(tab *t);
 void mark_colour(int style, unsigned char rgb[3]);
@@ -734,6 +735,7 @@ void step_match(tab *t, int delta); /* searches instead while the typed query is
 void redact_current_match(tab *t);
 void redact_all_matches(tab *t);
 void show_find(tab *t);
+void tab_find_text(tab *t, const char *query, int all_tabs); /* the find bar open on query, in t or all tabs */
 void hide_find(tab *t);
 void caret_draw(tab *t); /* the vim caret, its selection and the mode badge, over the pages in t->view */
 /* the number through the document of the vim caret's line, as pt_number_lines counts; 0 without a caret or while the

@@ -550,10 +550,10 @@ ui_menu *app_build_menu(tab *t)
     menu_sep(v);
 #ifndef __ANDROID__
     menu_item(v, "Full screen", "maximize", keymap_label("fullscreen"), m_action, NULL, 20, 1, app_fullscreen());
-#endif
     menu_item(v, "Vim keys", "keyboard", keymap_label("vim_keys"), m_action, NULL, 17, 1, vim_keys_on());
     menu_item(v, "Vim key hints", "keyboard", NULL, m_action, NULL, 18, vim_keys_on(),
               pt_settings_int(&app.settings, "vim_key_hints"));
+#endif
     menu_item(v, "E-book layout...", "two-pages", NULL, m_action, NULL, 14, 1, 0);
     ui_menu *a = menu_sub(v, "Appearance", "appearance");
     const char *scheme = pt_settings_str(&app.settings, "theme");
@@ -575,7 +575,9 @@ ui_menu *app_build_menu(tab *t)
 #endif
     menu_sep(m);
     menu_item(m, "Command palette...", "search", keymap_label("palette"), m_action, NULL, 15, 1, 0);
+#ifndef __ANDROID__
     menu_item(m, "Keyboard shortcuts...", "keyboard", keymap_label("shortcuts"), m_action, NULL, 16, 1, 0);
+#endif
     menu_item(m, "About " APP_NAME "...", "about", NULL, m_action, NULL, 11, 1, 0);
     return m;
 }
@@ -615,7 +617,7 @@ static float win_tab_width(const win_tab *w, const char *title)
     return fminf(TAB_MAX_W, fmaxf(TAB_MIN_W, natural));
 }
 
-/* ---- "Go to tab": the open tabs, filtered by what is typed (title or path) ---- */
+/* ---- Search: the open tabs, filtered by what is typed (title or path), below rows that find it as text ---- */
 
 typedef struct {
     ui_text filter;
@@ -641,6 +643,8 @@ static int tab_matches(int i, const char *needle)
     return hit;
 }
 
+static int doc_tab(int i) { return i >= 0 && app.tabs.v[i].kind == TAB_DOC && app.tabs.v[i].doc->doc; }
+
 static int tab_list_frame(dialog *d, Rectangle b)
 {
     tab_list *l = d->data;
@@ -649,35 +653,63 @@ static int tab_list_frame(dialog *d, Rectangle b)
     if (ui_key(KEY_UP)) l->sel--;
     int ev = ui_textfield(ui_id(l, 1), &l->filter, (Rectangle){b.x, b.y, b.width, 30}, 1);
     if (ui.focus != &l->filter) text_focus(&l->filter);
+    const char *q = text_get(&l->filter);
+
+    /* with text typed, first "find in this document" (when the current tab is one), then "find in all tabs" (run
+     * from the current document, else the first one open) */
+    int here = doc_tab(app.current) ? app.current : -1, any = here;
+    for (int i = 0; any < 0 && i < app.tabs.n; i++)
+        if (doc_tab(i)) any = i;
+    int nfind = *q ? (here >= 0) + (any >= 0) : 0;
     pt_ints shown = {0};
     for (int i = 0; i < app.tabs.n; i++)
-        if (tab_matches(i, text_get(&l->filter))) pt_push(shown, i);
+        if (tab_matches(i, q)) pt_push(shown, i);
+    int nrows = nfind + shown.n;
     if (ev & TE_CHANGED) l->sel = 0, l->scroll = 0;
-    l->sel = shown.n ? (l->sel < 0 ? 0 : l->sel >= shown.n ? shown.n - 1 : l->sel) : 0;
-    const float row = 34;
+    l->sel = nrows ? (l->sel < 0 ? 0 : l->sel >= nrows ? nrows - 1 : l->sel) : 0;
+
+    const float row = 34, head = nfind && shown.n ? 26 : 0;
+#define ROW_Y(k) ((k) * row + ((k) >= nfind ? head : 0))
     Rectangle list = {b.x, b.y + 40, b.width, b.height - 40};
-    if (l->sel * row < l->scroll) l->scroll = l->sel * row;
-    if ((l->sel + 1) * row > l->scroll + list.height) l->scroll = (l->sel + 1) * row - list.height;
+    if (ROW_Y(l->sel) < l->scroll) l->scroll = ROW_Y(l->sel);
+    if (ROW_Y(l->sel) + row > l->scroll + list.height) l->scroll = ROW_Y(l->sel) + row - list.height;
     if (ui_hover(list) && ui.wheel) l->scroll -= ui.wheel * row * 2;
-    l->scroll = fmaxf(0, fminf(l->scroll, shown.n * row - list.height));
+    l->scroll = fmaxf(0, fminf(l->scroll, nrows * row + head - list.height));
     int pick = ev & TE_SUBMIT ? l->sel : -1;
     ui_scissor_begin(list);
-    for (int k = 0; k < shown.n; k++) {
-        Rectangle rr = {list.x, list.y + k * row - l->scroll, list.width, row};
+    if (head)
+        draw_text_in("Tabs", (Rectangle){list.x + 12, list.y + nfind * row - l->scroll, list.width - 24, head}, FS_SMALL,
+                     F_BOLD, pal.disabled_text, -1);
+    for (int k = 0; k < nrows; k++) {
+        Rectangle rr = {list.x, list.y + ROW_Y(k) - l->scroll, list.width, row};
         if (rr.y + row < list.y || rr.y > list.y + list.height) continue;
-        int i = shown.v[k], hover = ui_hover(rr);
+        int hover = ui_hover(rr);
         if (k == l->sel) DrawRectangleRec(rr, pal.highlight);
         else if (hover) DrawRectangleRec(rr, with_alpha(pal.light, 160));
         Color fg = k == l->sel ? pal.highlighted_text : pal.text;
-        char *title = win_tab_title(&app.tabs.v[i]);
-        char *el = elide_middle(title, rr.width - 24, FS_NORMAL, i == app.current ? F_BOLD : F_REGULAR);
-        draw_text_in(el, (Rectangle){rr.x + 12, rr.y, rr.width - 24, row}, FS_NORMAL,
-                     i == app.current ? F_BOLD : F_REGULAR, fg, -1);
-        free(el), free(title);
+        if (k < nfind) {
+            draw_icon("find", (Rectangle){rr.x + 12, rr.y + (row - 16) / 2, 16, 16}, fg);
+            char *label = pt_format("Find \"%s\" in %s", q, k == 0 && here >= 0 ? "this document" : "all tabs");
+            char *el = elide_middle(label, rr.width - 48, FS_NORMAL, F_REGULAR);
+            draw_text_in(el, (Rectangle){rr.x + 36, rr.y, rr.width - 48, row}, FS_NORMAL, F_REGULAR, fg, -1);
+            free(el), free(label);
+        } else {
+            int i = shown.v[k - nfind];
+            char *title = win_tab_title(&app.tabs.v[i]);
+            char *el = elide_middle(title, rr.width - 24, FS_NORMAL, i == app.current ? F_BOLD : F_REGULAR);
+            draw_text_in(el, (Rectangle){rr.x + 12, rr.y, rr.width - 24, row}, FS_NORMAL,
+                         i == app.current ? F_BOLD : F_REGULAR, fg, -1);
+            free(el), free(title);
+        }
         if (hover && ui.released) pick = k;
     }
+#undef ROW_Y
     ui_scissor_end();
-    if (pick >= 0 && pick < shown.n) app.current = shown.v[pick];
+    if (pick >= 0 && pick < nfind) {
+        int all = !(pick == 0 && here >= 0), at = all ? any : here;
+        app.current = at;
+        tab_find_text(app.tabs.v[at].doc, q, all);
+    } else if (pick >= nfind && pick < nrows) app.current = shown.v[pick - nfind];
     pt_vec_free(shown);
     return pick >= 0 || (ev & TE_CANCEL);
 }
@@ -695,9 +727,9 @@ static void tab_list_open(void)
     dialog *d = calloc(1, sizeof *d);
     tab_list *l = calloc(1, sizeof *l);
     l->sel = app.current; /* with nothing typed the rows are the tabs in order */
-    l->filter.placeholder = "Search open tabs";
+    l->filter.placeholder = "Text to find, or a tab's name";
     l->filter.size = FS_NORMAL;
-    *d = (dialog){"Go to tab", 520, 460, tab_list_frame, tab_list_free, l, 1};
+    *d = (dialog){"Search", 520, 460, tab_list_frame, tab_list_free, l, 1};
     dialog_push(d);
 }
 
@@ -745,7 +777,7 @@ static void tab_strip(Rectangle r)
 
     if (ui_button(ui_id(&app.tabs, 600),
                   (Rectangle){r.x + r.width - TAB_LIST_W + 2, r.y + 2, TAB_LIST_W - 4, r.height - 4}, NULL, "find",
-                  B_FLAT | B_ICON_ONLY, "Go to tab..."))
+                  B_FLAT | B_ICON_ONLY, keymap_tip("Search text and tabs", "tab.list")))
         tab_list_open();
 
     ui_scissor_begin(strip);

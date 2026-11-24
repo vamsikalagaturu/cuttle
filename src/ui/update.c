@@ -355,7 +355,7 @@ static void about_free(dialog *d) { (void)d; }
 void about_dialog(void)
 {
     dialog *d = calloc(1, sizeof *d);
-    *d = (dialog){"About " APP_NAME, 560, 250, about_frame, about_free, NULL, 1};
+    *d = (dialog){"About " APP_NAME, 560, 272, about_frame, about_free, NULL, 1};
     dialog_push(d);
 }
 

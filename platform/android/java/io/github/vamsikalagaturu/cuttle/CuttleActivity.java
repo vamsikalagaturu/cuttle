@@ -349,8 +349,9 @@ public class CuttleActivity extends NativeActivity {
 
     /* ---- the picker ---- */
 
-    /* mode: open, many, save or dir; mimes: space-separated; name: suggested file name for save. */
-    public String pick(String mode, String mimes, String name) {
+    /* mode: open, many, save or dir; mimes: space-separated; name: suggested file name for save; initial: a document
+     * whose folder the picker starts in, or null. */
+    public String pick(String mode, String mimes, String name, String initial) {
         Intent i;
         if (mode.equals("dir")) {
             i = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
@@ -364,6 +365,7 @@ public class CuttleActivity extends NativeActivity {
             if (mode.equals("many")) i.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
             if (mode.equals("save") && name != null) i.putExtra(Intent.EXTRA_TITLE, name);
         }
+        if (initial != null) i.putExtra(DocumentsContract.EXTRA_INITIAL_URI, Uri.parse(initial));
         i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
         synchronized (lock) { pickResult = null; }
@@ -507,6 +509,40 @@ public class CuttleActivity extends NativeActivity {
         } catch (Exception e) {
             try { if (out != null) out.close(); } catch (Exception e2) { /* already failed */ }
             return e.toString();
+        }
+    }
+
+    /* "1" when the document's provider lets it be deleted, which a rename (save under the new name, then delete
+     * this one) needs. */
+    public String canDelete(String uri) {
+        try (Cursor c = getContentResolver().query(Uri.parse(uri),
+                 new String[] {DocumentsContract.Document.COLUMN_FLAGS}, null, null, null)) {
+            if (c != null && c.moveToFirst() && (c.getInt(0) & DocumentsContract.Document.FLAG_SUPPORTS_DELETE) != 0)
+                return "1";
+        } catch (Exception e) {
+            /* not a document URI */
+        }
+        return null;
+    }
+
+    public String deleteDocument(String uri) {
+        try {
+            return DocumentsContract.deleteDocument(getContentResolver(), Uri.parse(uri)) ? "1" : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /* "1" when both URIs name one document: the save dialog hands back the original when the user picks it to
+     * overwrite. */
+    public String sameDocument(String a, String b) {
+        if (a.equals(b)) return "1";
+        try {
+            Uri x = Uri.parse(a), y = Uri.parse(b);
+            return x.getAuthority() != null && x.getAuthority().equals(y.getAuthority())
+                && DocumentsContract.getDocumentId(x).equals(DocumentsContract.getDocumentId(y)) ? "1" : null;
+        } catch (Exception e) {
+            return null;
         }
     }
 

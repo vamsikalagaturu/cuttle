@@ -100,6 +100,12 @@ Cancel gives an empty list. Picked URIs keep their permission (`takePersistableU
   replaces the copy as on the desktop and the result reaches the original document. If the document cannot be
   written (for example a read-only grant from another app), the app says so and offers a "save as" picker for the
   saved version; that document then takes the copy's place for later saves.
+- **Rename** (File > Rename...) is the system save dialog in the document's folder with its name filled in: the
+  copy is written to the document created there, then the original is deleted (`DocumentsContract.deleteDocument`)
+  and the copy moves to the new document's place in the cache. `renameDocument` is not used: device storage names
+  documents by path, so a renamed one gets a new URI that the picker's grant does not follow, and later saves
+  could not reach it. Offered only for documents whose provider allows deleting them; picking the original itself
+  ("Replace file?") changes nothing.
 - **Trash:** Save normally moves the original to the trash first. On Android, files on shared storage and copies
   are replaced in place; only the app's own files (signatures) go to its trash under `files/.local/share/Trash`.
 - **Recent files** list copies; they reopen from the copy, and a copy the system removed from the cache is
@@ -140,9 +146,11 @@ about unsaved edits.
   (serif, monospace, sans-serif).
 - System bars and keyboard: `systemInsets()` (system bars, cutout and IME, polled every 0.1 s) keeps the UI clear
   of the gesture bar and the soft keyboard; the page view scrolls a focused field above the keyboard.
-- Sharing: File > Share... (and the narrow toolbar's More menu) writes the edited PDF to `cache/share/` and opens
+- Sharing: File > Share... writes the edited PDF to `cache/share/` and opens
   the share sheet; `ShareProvider` serves it read-only as `content://<package>.share/<name>`.
 
 ## Not available on Android
 
-Editor commands (inverse SyncTeX search opens nothing), new windows and `--forward`.
+Editor commands (inverse SyncTeX search opens nothing), new windows and `--forward`. Vim keys, key hints in
+menus and tooltips, and the Keyboard shortcuts dialog are left out of the build; a hardware keyboard (Bluetooth,
+USB, DeX) still has the default shortcuts.

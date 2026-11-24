@@ -229,9 +229,8 @@ static void run(void *ctx, intptr_t a)
     case A_COPY_PATH: tab_copy_path(t); break;
 #ifdef __ANDROID__
     case A_SHARE: tab_share(t); break;
-#else
-    case A_RENAME: tab_rename(t); break;
 #endif
+    case A_RENAME: tab_rename(t); break;
     case A_SPLIT: tab_split(t); break;
     case A_UNDO: tab_undo(t); break;
     case A_REDO: tab_redo(t); break;
@@ -369,9 +368,7 @@ void tab_menu_items(tab *t, ui_menu *file, ui_menu *edit, ui_menu *tools, ui_men
         menu_item(file, "Share...", "export", NULL, run, t, A_SHARE, doc, 0);
 #endif
         menu_sep(file);
-#ifndef __ANDROID__
-        menu_item(file, "Rename...", "edit", keymap_label("rename"), run, t, A_RENAME, doc && t->path, 0);
-#endif
+        menu_item(file, "Rename...", "edit", keymap_label("rename"), run, t, A_RENAME, tab_can_rename(t), 0);
         menu_item(file, "Copy file path", "copy", keymap_label("copy_path"), run, t, A_COPY_PATH, doc, 0);
     }
 
@@ -463,8 +460,10 @@ void tab_menu_items(tab *t, ui_menu *file, ui_menu *edit, ui_menu *tools, ui_men
         menu_item(ln, "Through the document", "book-open", NULL, run, t, A_LINE_NUMBERS + 1, doc,
                   on && !relative && mode == PT_NUMBER_DOCUMENT);
         menu_item(ln, "Per page", "file", NULL, run, t, A_LINE_NUMBERS + 2, doc, on && mode == PT_NUMBER_PAGE);
+#ifndef __ANDROID__
         menu_item(ln, "Relative to the caret (vim keys)", "keyboard", NULL, run, t, A_LINE_NUMBERS + 3, doc,
                   on && relative);
+#endif
         menu_sep(ln);
         int size = pt_settings_int(&app.settings, "line_numbers_size");
         menu_item(ln, "Larger numbers", "zoom-in", keymap_label("line_numbers.bigger"), run, t, A_NUMBERS_BIGGER,
@@ -2755,7 +2754,7 @@ static int tool_has_options(tab *t)
            t->tool == T_SHAPE || t->tool == T_SIGN || t->tool == T_FORM;
 }
 
-/* phone-sized windows: one picker for the tools, the rest in an overflow menu; tool options get their own row */
+/* phone-sized windows: one picker for the tools; tool options get their own row */
 static void narrow_toolbar(tab *t, Rectangle area)
 {
     float h = 32, y = area.y + (area.height - h) / 2;
@@ -2785,54 +2784,12 @@ static void narrow_toolbar(tab *t, Rectangle area)
                       t->tool == (tool_id)i);
         menu_open_below(m, tb);
     }
-
-    float rx = area.x + area.width - 32;
-    Rectangle more = {rx, y, 32, h};
-    if (ui_button(bid(t, 26), more, NULL, "more", B_FLAT | dis, "More")) {
-        ui_menu *m = menu_new();
-        int n = tab_edit_count(t);
-        menu_item(m, "Zoom in", "zoom-in", keymap_label("zoom_in"), run, t, A_ZOOM_IN, doc, 0);
-        menu_item(m, "Zoom out", "zoom-out", keymap_label("zoom_out"), run, t, A_ZOOM_OUT, doc, 0);
-        menu_item(m, "Fit width", "fit", keymap_label("fit_width"), run, t, A_FIT, doc, 0);
-        menu_item(m, "Fit height", "fit-height", keymap_label("fit_height"), run, t, A_FIT_HEIGHT, doc, 0);
-        menu_item(m, "Continuous scroll", "continuous", keymap_label("continuous"), run, t, A_CONTINUOUS, doc,
-                  continuous());
-        int starred = t->path && pt_settings_is_starred(&app.settings, t->path);
-        menu_item(m, starred ? "Unstar this file" : "Star this file", starred ? "star-filled" : "star",
-                  keymap_label("star_file"), run, t, A_STAR, t->path != NULL, 0);
-        menu_item(m, "Reading mode", "eye", keymap_label("reading_mode"), run, t, A_READING, doc, app_reading());
-        menu_item(m, "Dark document", "dark", keymap_label("document_dark"), run, t, A_DOCUMENT_DARK, doc,
-                  app_document_dark());
-#ifndef __ANDROID__
-        menu_item(m, "Full screen", "maximize", keymap_label("fullscreen"), run, t, A_FULLSCREEN, 1, app_fullscreen());
-#endif
-        menu_sep(m);
-        menu_item(m, "Save (overwrite original)", "save", keymap_label("save"), run, t, A_SAVE, n > 0, 0);
-        menu_item(m, "Save As...", "save", keymap_label("save_as"), run, t, A_SAVE_AS, n > 0, 0);
-        menu_item(m, "Save optimized copy...", "save", keymap_label("save_optimized"), run, t, A_OPTIMIZE, doc, 0);
-        menu_item(m, "Export pages...", "export", keymap_label("export"), run, t, A_EXPORT, doc, 0);
-        menu_item(m, "Protect with password...", "lock", keymap_label("protect"), run, t, A_PROTECT, doc, 0);
-        menu_item(m, "Remove password...", "unlock", keymap_label("unprotect"), run, t, A_UNPROTECT, doc && t->password,
-                  0);
-        menu_sep(m);
-        menu_item(m, "Print...", "print", keymap_label("print"), run, t, A_PRINT, doc, 0);
-#ifdef __ANDROID__
-        menu_item(m, "Share...", "export", NULL, run, t, A_SHARE, doc, 0);
-#endif
-        menu_open_below(m, more);
-    }
-    rx -= 34;
-    if (ui_button(bid(t, 24), (Rectangle){rx, y, 32, h}, NULL, "find", (t->find_open ? B_CHECKED : B_FLAT) | dis,
-                  keymap_tip("Find", "find"))) {
-        if (t->find_open) hide_find(t);
-        else run(t, A_FIND);
-    }
 }
 
 void tab_toolbar(tab *t, Rectangle area)
 {
     /* right side, laid out first so the tools know how much room they have */
-    float right = 2 * ZOOM_BUTTON_W + 2 + ZOOM_LABEL_W + 34 * 2 + UI_SEP_W + 34 * 3 + UI_SEP_W + 34;
+    float right = 2 * ZOOM_BUTTON_W + 2 + ZOOM_LABEL_W + 34 * 2 + UI_SEP_W + 34 * 2;
     /* narrower than this the tools, even as bare icons, run into the right side */
     float wide_min = 34 * 3 + UI_SEP_W + T_COUNT * 34 + 20 + right;
     t->narrow = ui.w < NARROW_W || area.width < wide_min;
@@ -2906,44 +2863,11 @@ void tab_toolbar(tab *t, Rectangle area)
                   "Scroll through all pages (off: one page at a time)"))
         run(t, A_CONTINUOUS);
     x += 34;
-    if (ui_button(bid(t, 24), (Rectangle){x, y, 32, h}, NULL, "find", (t->find_open ? B_CHECKED : B_FLAT) | dis,
-                  keymap_tip("Find", "find"))) {
-        if (t->find_open) hide_find(t);
-        else run(t, A_FIND);
-    }
-    x += 34;
     int starred = t->path && pt_settings_is_starred(&app.settings, t->path);
     if (ui_button(bid(t, 28), (Rectangle){x, y, 32, h}, NULL, starred ? "star-filled" : "star",
                   B_FLAT | (t->path ? 0 : B_DISABLED),
                   keymap_tip(starred ? "Remove the star" : "Star this file", "star_file")))
         run(t, A_STAR);
-    x += 34;
-    x = separator(x, y, h);
-
-    Rectangle more = {x, y, 32, h};
-    if (ui_button(bid(t, 26), more, NULL, "more", B_FLAT | dis, "More")) {
-        ui_menu *m = menu_new();
-        int n = tab_edit_count(t);
-        menu_item(m, "Reading mode", "eye", keymap_label("reading_mode"), run, t, A_READING, doc, app_reading());
-        menu_item(m, "Dark document", "dark", keymap_label("document_dark"), run, t, A_DOCUMENT_DARK, doc,
-                  app_document_dark());
-#ifndef __ANDROID__
-        menu_item(m, "Full screen", "maximize", keymap_label("fullscreen"), run, t, A_FULLSCREEN, 1, app_fullscreen());
-#endif
-        menu_sep(m);
-        menu_item(m, "Save (overwrite original)", "save", keymap_label("save"), run, t, A_SAVE, n > 0, 0);
-        menu_item(m, "Save As...", "save", keymap_label("save_as"), run, t, A_SAVE_AS, n > 0, 0);
-        menu_item(m, "Save optimized copy...", "save", keymap_label("save_optimized"), run, t, A_OPTIMIZE, doc, 0);
-        menu_item(m, "Export pages...", "export", keymap_label("export"), run, t, A_EXPORT, doc, 0);
-        menu_sep(m);
-        menu_item(m, "Protect with password...", "lock", keymap_label("protect"), run, t, A_PROTECT, doc, 0);
-        menu_item(m, "Remove password...", "unlock", keymap_label("unprotect"), run, t, A_UNPROTECT, doc && t->password,
-                  0);
-        menu_sep(m);
-        menu_item(m, "Print...", "print", keymap_label("print"), run, t, A_PRINT, doc, 0);
-        menu_item(m, "Print preview...", "print", keymap_label("print_preview"), run, t, A_PREVIEW, doc, 0);
-        menu_open_below(m, more);
-    }
 }
 
 /* ---- find bar ---- */
@@ -5336,6 +5260,14 @@ void show_find(tab *t)
     t->find_first = 1;
     text_select_all(&t->find);
     if (*text_get(&t->find)) run_search(t);
+}
+
+void tab_find_text(tab *t, const char *query, int all_tabs)
+{
+    if (!t->doc) return;
+    text_set(&t->find, query);
+    find_all = all_tabs;
+    show_find(t);
 }
 
 void hide_find(tab *t)

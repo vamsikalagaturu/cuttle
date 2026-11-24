@@ -10,6 +10,7 @@
 #include <android/log.h>
 #include <android_native_app_glue.h>
 #include <dirent.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,6 +20,7 @@
 
 #define LOG(...) __android_log_print(ANDROID_LOG_INFO, "cuttle", __VA_ARGS__)
 #define FD_REEXPORT 100
+#define FD_RENAME 101
 
 char *pt_android_cache_dir;
 int pt_desktop_move_to_trash(const char *path);
@@ -60,6 +62,7 @@ typedef struct {
     long long mtime, size; /* the copy as last written back (or copied in); -2: never */
     long long seen_mtime, seen_size;
     double seen_at;
+    int can_rename; /* -1: not asked yet */
 } doc;
 
 PT_VEC(doc_list, doc);
@@ -98,7 +101,7 @@ static doc *remember(const char *path, const char *uri)
 {
     doc *d = by_path(path);
     if (!d) {
-        pt_push(docs, (doc){pt_strdup(path), pt_strdup(uri), -2, -2, -1, -1, 0});
+        pt_push(docs, (doc){pt_strdup(path), pt_strdup(uri), -2, -2, -1, -1, 0, -1});
         d = &docs.v[docs.n - 1];
     } else if (strcmp(d->uri, uri)) {
         free(d->uri);
@@ -180,15 +183,105 @@ char *pt_android_open_uri(const char *uri)
     return path;
 }
 
-/* ---- writing back ---- */
+/* ---- renaming ---- */
 
-static void pick_start(int mode, const char *mimes, const char *name, ui_files_done done, void *ctx,
-                       const char *reexport);
+/* tabs hold the resolved path (/data/data/...), the copies the one the cache folder was given (/data/user/0/...) */
+static doc *by_file(const char *path)
+{
+    doc *d = by_path(path);
+    for (int i = 0; !d && i < docs.n; i++)
+        if (pt_same_file(docs.v[i].path, path)) d = &docs.v[i];
+    return d;
+}
+
+/* Renaming in place (DocumentsContract.renameDocument) gives some providers' documents a new URI that the app's
+ * grant does not follow (device storage names documents by path), so later saves could not reach it. A rename is
+ * therefore Android's save dialog in the document's folder with its name filled in: the copy is written to the
+ * document created there, and only then is the original deleted. */
+int pt_android_can_rename(const char *path)
+{
+    doc *d = by_file(path);
+    if (!d) return 0;
+    if (d->can_rename < 0) {
+        char *r = pt_java("canDelete", 1, d->uri);
+        d->can_rename = r != NULL;
+        free(r);
+    }
+    return d->can_rename;
+}
+
+static void pick_start(int mode, const char *mimes, const char *name, const char *initial, ui_files_done done,
+                       void *ctx, const char *subject);
+
+void pt_android_rename(const char *path, ui_files_done done, void *ctx)
+{
+    doc *d = by_file(path);
+    if (!d) return;
+    const pt_doc_format *format = pt_doc_format_of(d->path);
+    const char *dot = strrchr(d->path, '.');
+    const char *mime = dot && !strcasecmp(dot, ".pdf") ? "application/pdf"
+                       : format                         ? format->mime
+                                                        : "application/octet-stream";
+    char *name = safe_name(d->uri);
+    pick_start(FD_RENAME, mime, name, d->uri, done, ctx, d->path);
+    free(name);
+}
+
+/* the copy of d to the new document uri, then the original deleted; the copy's new path, or NULL */
+static char *rename_to(doc *d, const char *uri)
+{
+    char *same = pt_java("sameDocument", 2, d->uri, uri);
+    if (same) {
+        free(same);
+        return NULL;
+    }
+    char *err = pt_java("copyOut", 2, d->path, uri);
+    if (err) {
+        LOG("rename %s to %s: %s", d->uri, uri, err);
+        free(err);
+        free(pt_java("deleteDocument", 1, uri));
+        char *msg = pt_format("Could not save %s under the new name; nothing was renamed.", pt_basename(d->path));
+        message_box(MSG_ERROR, APP_NAME, msg, NULL, NULL);
+        free(msg);
+        return NULL;
+    }
+    char *deleted = pt_java("deleteDocument", 1, d->uri);
+    char *old_name = pt_strdup(pt_basename(d->path));
+
+    /* the copy moves to where opening the new document would put it */
+    char *name = safe_name(uri);
+    char *dir = pt_format("%s/saf/%016llx", pt_android_cache_dir, fnv(uri)), *target = pt_join(dir, name);
+    pt_mkdirs(dir);
+    if (rename(d->path, target)) {
+        LOG("move copy %s: %s", d->path, strerror(errno));
+        free(target);
+        target = pt_strdup(d->path);
+    } else {
+        char *old_dir = pt_dirname(d->path);
+        if (strcmp(old_dir, dir)) rmdir(old_dir);
+        free(old_dir);
+    }
+    free(d->path), free(d->uri);
+    d->path = pt_strdup(target), d->uri = pt_strdup(uri);
+    stamp(d->path, &d->mtime, &d->size);
+    d->seen_mtime = d->mtime, d->seen_size = d->size;
+    d->can_rename = -1;
+    save_docs();
+    if (!deleted) {
+        char *msg = pt_format("Saved as %s, but %s could not be deleted, so both are there now.", name, old_name);
+        message_box(MSG_INFO, APP_NAME, msg, NULL, NULL);
+        free(msg);
+    }
+    free(deleted), free(old_name), free(name), free(dir);
+    return target;
+}
+
+/* ---- writing back ---- */
 
 static void reexport_answer(void *ctx, int yes)
 {
     char *path = ctx;
-    if (yes) pick_start(FD_REEXPORT, "application/pdf", pt_basename(path), NULL, NULL, path);
+    if (yes) pick_start(FD_REEXPORT, "application/pdf", pt_basename(path), NULL, NULL, NULL, path);
     free(path);
 }
 
@@ -297,18 +390,18 @@ static struct {
     int active, mode;
     ui_files_done done;
     void *ctx;
-    char *reexport;
+    char *subject; /* FD_REEXPORT, FD_RENAME: the copy the pick is for */
 } pick;
 
-static void pick_start(int mode, const char *mimes, const char *name, ui_files_done done, void *ctx,
-                       const char *reexport)
+static void pick_start(int mode, const char *mimes, const char *name, const char *initial, ui_files_done done,
+                       void *ctx, const char *subject)
 {
     if (pick.active) return;
     const char *kind = mode == FD_OPEN ? "open" : mode == FD_OPEN_MANY ? "many" : mode == FD_DIR ? "dir" : "save";
-    free(pt_java("pick", 3, kind, mimes, name));
-    free(pick.reexport);
+    free(pt_java("pick", 4, kind, mimes, name, initial));
+    free(pick.subject);
     pick.active = 1, pick.mode = mode, pick.done = done, pick.ctx = ctx;
-    pick.reexport = reexport ? pt_strdup(reexport) : NULL;
+    pick.subject = subject ? pt_strdup(subject) : NULL;
 }
 
 /* room for every type of pt_doc_formats */
@@ -354,12 +447,12 @@ void file_dialog(int mode, const char *title, const char *start, const char *fil
     if (mode == FD_SAVE)
         snprintf(types, sizeof types, "%s",
                  strstr(types, "application/pdf") ? "application/pdf" : "application/octet-stream");
-    pick_start(mode, types, mode == FD_SAVE && start ? pt_basename(start) : NULL, done, ctx, NULL);
+    pick_start(mode, types, mode == FD_SAVE && start ? pt_basename(start) : NULL, NULL, done, ctx, NULL);
 }
 
 int file_dialog_busy(void) { return pick.active; }
 
-static void picked(int mode, ui_files_done done, void *ctx, char *reexport, pt_strs *uris)
+static void picked(int mode, ui_files_done done, void *ctx, char *subject, pt_strs *uris)
 {
     pt_strs paths = {0};
     doc *d = NULL;
@@ -386,13 +479,17 @@ static void picked(int mode, ui_files_done done, void *ctx, char *reexport, pt_s
         pt_push(outs, (out_dir){pt_strdup(dir), pt_strdup(uris->v[0]), {0}});
         o = &outs.v[outs.n - 1];
         pt_push(paths, dir);
-    } else if (mode == FD_REEXPORT && uris->n && reexport && (d = by_path(reexport))) {
+    } else if (mode == FD_REEXPORT && uris->n && subject && (d = by_path(subject))) {
         free(d->uri);
         d->uri = pt_strdup(uris->v[0]);
         d->mtime = d->size = -2;
         save_docs();
         sync_doc(d, 1);
         return;
+    } else if (mode == FD_RENAME && uris->n && subject) {
+        doc *r = by_path(subject);
+        char *path = r ? rename_to(r, uris->v[0]) : NULL;
+        if (path) pt_push(paths, path);
     }
     if (done) done(ctx, &paths);
     pt_strs_free(&paths);
@@ -416,10 +513,10 @@ void file_dialogs_poll(void)
             int mode = pick.mode;
             ui_files_done done = pick.done;
             void *ctx = pick.ctx;
-            char *reexport = pick.reexport;
-            pick.active = 0, pick.reexport = NULL;
-            picked(mode, done, ctx, reexport, &uris);
-            free(reexport);
+            char *subject = pick.subject;
+            pick.active = 0, pick.subject = NULL;
+            picked(mode, done, ctx, subject, &uris);
+            free(subject);
             pt_strs_free(&uris);
             ui.dirty = 1;
         }
@@ -434,8 +531,11 @@ void file_dialogs_poll(void)
  * in place. Files of the app itself (signatures) still go to the app's freedesktop trash. */
 int move_to_trash(const char *path)
 {
-    const char *own = GetAndroidApp()->activity->internalDataPath;
+    if (by_file(path)) return 0;
+    /* resolved on both sides: /data/data/... and /data/user/0/... name the same folder */
+    char *own = pt_realpath(GetAndroidApp()->activity->internalDataPath), *real = pt_realpath(path);
     size_t n = strlen(own);
-    if (by_path(path) || strncmp(path, own, n) || (path[n] && path[n] != '/')) return 0;
-    return pt_desktop_move_to_trash(path);
+    int inside = !strncmp(real, own, n) && (!real[n] || real[n] == '/');
+    free(own), free(real);
+    return inside ? pt_desktop_move_to_trash(path) : 0;
 }

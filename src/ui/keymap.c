@@ -142,7 +142,7 @@ static const action_def ACTIONS[] = {
     {"fullscreen", "Full screen", "View", KS_APP, {"F11"}},
     {"tab.next", "Next tab", "View", KS_APP, {"Ctrl+Tab"}},
     {"tab.prev", "Previous tab", "View", KS_APP, {"Ctrl+Shift+Tab"}},
-    {"tab.list", "Go to tab...", "View", KS_APP, {"Ctrl+Shift+K"}},
+    {"tab.list", "Search text and tabs...", "View", KS_APP, {"Ctrl+Shift+K"}},
     {"vim_keys", "Vim keys", "View", KS_APP, {0}},
     {"line_numbers.bigger", "Larger numbers", "View" PATH_SEP "Line numbers", KS_DOC, {0}},
     {"line_numbers.smaller", "Smaller numbers", "View" PATH_SEP "Line numbers", KS_DOC, {0}},
@@ -256,7 +256,9 @@ static const char *prefix_of(int i)
 }
 
 static pt_combos keys[NACTIONS];
+#ifndef __ANDROID__
 static char labels[NACTIONS][LABEL_MAX];
+#endif
 static char *keys_path;
 
 static int action_index(const char *id)
@@ -267,7 +269,14 @@ static int action_index(const char *id)
     return -1;
 }
 
-int vim_keys_on(void) { return pt_settings_int(&app.settings, "vim_keys"); }
+int vim_keys_on(void)
+{
+#ifdef __ANDROID__
+    return 0;
+#else
+    return pt_settings_int(&app.settings, "vim_keys");
+#endif
+}
 
 /* action i's first key and label into the hint lists, unless an earlier one there takes that key */
 static void add_follower(int i, pt_strs *shown, pt_strs *what)
@@ -512,10 +521,15 @@ static void shown_combo(int i, int k, char *buf, size_t size)
 
 const char *keymap_label(const char *id)
 {
+#ifdef __ANDROID__
+    (void)id;
+    return "";
+#else
     int i = action_index(id);
     if (i < 0 || !keys[i].n) return "";
     shown_combo(i, 0, labels[i], sizeof labels[i]);
     return labels[i];
+#endif
 }
 
 const char *keymap_tip(const char *text, const char *id)
@@ -683,6 +697,9 @@ static int contains_nocase(const char *hay, const char *needle)
 
 static int matches(int i, const char *q)
 {
+#ifdef __ANDROID__
+    if (vim_scope(ACTIONS[i].scope) || !strcmp(ACTIONS[i].id, "vim_keys")) return 0;
+#endif
     if (!*q) return 1;
     char *label = full_label(i);
     int hit = contains_nocase(label, q) || contains_nocase(ACTIONS[i].id, q);
